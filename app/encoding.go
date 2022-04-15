@@ -6,7 +6,7 @@ import (
 )
 
 func MakeEncodingConfig() params.EncodingConfig {
-	encodingConfig := MakeEncodingConfig()
+	encodingConfig := params.MakeEncodingConfig()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)
