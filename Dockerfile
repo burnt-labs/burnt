@@ -4,17 +4,20 @@ RUN apk add --no-cache curl make git libc-dev bash gcc linux-headers eudev-dev p
 RUN apk add --update ca-certificates
 
 # Set working directory for the build
-WORKDIR /go/src/github.com/BurntFinance/burnt
-
-RUN git clone https://github.com/ignite-hq/cli.git --depth=1
-RUN cd cli && make install
-
-# Get dependancies - will also be cached if we won't change mod/sum
-COPY go.mod .
-COPY go.sum .
-RUN go mod download
+WORKDIR /opt/src/burnt
 
 # Add source files
 COPY . .
+RUN go mod download
 
-CMD ["ignite", "chain", "serve"]
+# Build
+RUN go build -o burntd ./cmd/burntd/
+
+# Build the runtime container
+FROM golang:alpine AS runtime-env
+
+WORKDIR /opt/burnt
+
+COPY --from=build-env /opt/src/burnt/burntd /opt/burnt/burntd
+
+ENTRYPOINT ["burntd"]
