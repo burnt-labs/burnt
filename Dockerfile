@@ -17,16 +17,4 @@ RUN go mod download
 # Add source files
 COPY . .
 
-## build Burnt daemon
-#RUN ignite chain build
-#
-## Final image
-#FROM alpine:edge
-#
-## Install ca-certificates
-#RUN apk add --update ca-certificates bash
-#
-## Copy over binaries from the build-env
-#COPY --from=build-env /go/bin/burntd /usr/bin/burntd
-#
-#CMD ["burntd", "start"]
+CMD ["ignite", "chain", "serve"]
