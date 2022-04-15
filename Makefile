@@ -82,7 +82,7 @@ build: go.sum
 ifeq ($(OS),Windows_NT)
 	exit 1
 else
-	go build -mod=readonly $(BUILD_FLAGS) -o build/burnt ./cmd/burntd
+	go build -mod=readonly $(BUILD_FLAGS) -o build/burntd ./cmd/burntd
 endif
 
 build-contract-tests-hooks:
