@@ -1,7 +1,6 @@
 package integration_tests
 
 import (
-	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -23,8 +22,6 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto"
 	tmcfg "github.com/tendermint/tendermint/config"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/p2p"
@@ -176,30 +173,6 @@ func (v *validator) createKey(name string) error {
 	}
 
 	return v.createKeyFromMnemonic(name, mnemonic, "")
-}
-
-func (v *validator) generateEthereumKey() error {
-	privateKey, err := crypto.GenerateKey()
-	if err != nil {
-		return err
-	}
-
-	privateKeyBytes := crypto.FromECDSA(privateKey)
-
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return fmt.Errorf("unexpected public key type; expected: %T, got: %T", &ecdsa.PublicKey{}, publicKey)
-	}
-
-	publicKeyBytes := crypto.FromECDSAPub(publicKeyECDSA)
-	v.ethereumKey = ethereumKey{
-		privateKey: hexutil.Encode(privateKeyBytes),
-		publicKey:  hexutil.Encode(publicKeyBytes),
-		address:    crypto.PubkeyToAddress(*publicKeyECDSA).Hex(),
-	}
-
-	return nil
 }
 
 func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
