@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -12,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BurntFinance/burnt/app"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -64,6 +67,11 @@ func TestIntegrationTestSuite(t *testing.T) {
 
 func (s *IntegrationTestSuite) SetupSuite() {
 	s.T().Log("setting up e2e integration test suite...")
+
+	sdkConfig := sdk.GetConfig()
+	sdkConfig.SetBech32PrefixForAccount(app.Bech32PrefixAccAddr, app.Bech32PrefixAccPub)
+	sdkConfig.SetBech32PrefixForValidator(app.Bech32PrefixValAddr, app.Bech32PrefixValPub)
+	sdkConfig.SetBech32PrefixForConsensusNode(app.Bech32PrefixConsAddr, app.Bech32PrefixConsPub)
 
 	var err error
 	s.chain, err = newChain()
@@ -234,6 +242,12 @@ func (s *IntegrationTestSuite) initGenesis() {
 	appGenState[genutiltypes.ModuleName] = bz
 
 	// todo: set wasm genesis state
+	var wasmGenState wasm.GenesisState
+	s.Require().NoError(cdc.UnmarshalJSON(appGenState[wasmtypes.ModuleName], &wasmGenState))
+	s.T().Log("wasm config: ", wasmGenState.String())
+	bz, err = cdc.MarshalJSON(&wasmGenState)
+	s.Require().NoError(err)
+	appGenState[wasmtypes.ModuleName] = bz
 
 	// serialize genesis state
 	bz, err = json.MarshalIndent(appGenState, "", "  ")
