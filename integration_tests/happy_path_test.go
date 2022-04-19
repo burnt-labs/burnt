@@ -1,6 +1,7 @@
 package integration_tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	wasmutils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
@@ -68,6 +69,12 @@ func mintTokenMsg(contract string, sender types.AccAddress, id string, recipient
 	}, nil
 }
 
+type nftInfoResult struct {
+	Access struct {
+		Owner string `json:"owner"`
+	} `json:"access"`
+}
+
 func (s *IntegrationTestSuite) TestHappyPath() {
 	s.Run("Bring up chain, and test the happy path", func() {
 		msg, err := storeCode("contracts/compiled/cw721_metadata_onchain.wasm", s.chain.validators[0].keyInfo.GetAddress())
@@ -95,6 +102,7 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		s.Require().NoError(err)
 
 		instantiateMsg, err := instantiateContract(uint64(codeId), "Skronk Token Internazionale", val.keyInfo.GetAddress())
+		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
@@ -111,8 +119,28 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 			res, err = s.chain.sendMsgs(*clientCtx, &mintMsg)
 			s.Require().NoError(err)
 			s.Require().Zero(res.Code)
-			s.T().Log(res.RawLog)
 		}
+
+		queryClient := wasmtypes.NewQueryClient(clientCtx)
+
+		queryData, err := json.Marshal(map[string]interface{}{
+			"all_nft_info": map[string]interface{}{
+				"token_id": "badonk-0",
+			},
+		})
+		s.Require().NoError(err)
+		contractQueryData := wasmtypes.QuerySmartContractStateRequest{
+			Address:   contractAddress,
+			QueryData: queryData,
+		}
+		qres, err := queryClient.SmartContractState(context.Background(), &contractQueryData)
+		s.Require().NoError(err)
+		var obj nftInfoResult
+		err = json.Unmarshal(qres.Data, &obj)
+		s.Require().NoError(err)
+		owner := obj.Access.Owner
+		s.Require().Equal(val.keyInfo.GetAddress().String(), owner)
+
 		// TODO(@bigs, @ash)
 		// 3. Send one token to each of validators 1-3
 		// 4. Query contract state to confirm balance of all validators and that tokens are correct
