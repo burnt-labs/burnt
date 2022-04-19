@@ -523,6 +523,7 @@ func NewWasmApp(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		burntModule,
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
