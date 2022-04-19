@@ -418,5 +418,16 @@ func (s *IntegrationTestSuite) logsByContainerID(id string) string {
 func (s *IntegrationTestSuite) TestBasicChain() {
 	// this test verifies that the setup functions all operate as expected
 	s.Run("bring up basic chain", func() {
+		val := s.chain.validators[0]
+		keyring, err := val.keyring()
+		s.Require().NoError(err)
+		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring, "val", val.keyInfo.GetAddress())
+		s.Require().NoError(err)
+		node, err := clientCtx.GetNode()
+		s.Require().NoError(err)
+		status, err := node.Status(context.Background())
+		s.Require().NoError(err)
+		blockHeight := status.SyncInfo.LatestBlockHeight
+		s.Require().Greater(blockHeight, int64(0))
 	})
 }
