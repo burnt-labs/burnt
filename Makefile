@@ -197,6 +197,9 @@ proto-check-breaking:
 e2e_build_images: e2e_clean_slate
 	@docker build -t burnt:prebuilt -f Dockerfile .
 
+e2e_build_images_arm: e2e_clean_slate
+	@docker build -t burnt:prebuilt --build-arg "arch=aarch64" -f Dockerfile .
+
 e2e_clean_slate:
 	@docker rm --force \
 		$(shell docker ps -qa --filter="name=burnt") \
