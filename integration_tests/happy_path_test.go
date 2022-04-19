@@ -50,6 +50,24 @@ func instantiateContract(codeId uint64, label string, sender types.AccAddress) (
 	}, nil
 }
 
+func mintTokenMsg(contract string, sender types.AccAddress, id string, recipient types.AccAddress) (wasmtypes.MsgExecuteContract, error) {
+	msg, err := json.Marshal(map[string]interface{}{
+		"mint": map[string]interface{}{
+			"owner":    recipient.String(),
+			"token_id": id,
+		},
+	})
+	if err != nil {
+		return wasmtypes.MsgExecuteContract{}, nil
+	}
+	return wasmtypes.MsgExecuteContract{
+		Sender:   sender.String(),
+		Contract: contract,
+		Msg:      msg,
+		Funds:    nil,
+	}, nil
+}
+
 func (s *IntegrationTestSuite) TestHappyPath() {
 	s.Run("Bring up chain, and test the happy path", func() {
 		msg, err := storeCode("contracts/compiled/cw721_metadata_onchain.wasm", s.chain.validators[0].keyInfo.GetAddress())
@@ -87,8 +105,15 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		contractAddress := attr.Value
 		s.T().Logf("Contract address: %s", contractAddress)
 
+		for i, otherVal := range s.chain.validators {
+			id := fmt.Sprintf("badonk-%d", i)
+			mintMsg, err := mintTokenMsg(contractAddress, val.keyInfo.GetAddress(), id, otherVal.keyInfo.GetAddress())
+			res, err = s.chain.sendMsgs(*clientCtx, &mintMsg)
+			s.Require().NoError(err)
+			s.Require().Zero(res.Code)
+			s.T().Log(res.RawLog)
+		}
 		// TODO(@bigs, @ash)
-		// 2. Mint four tokens
 		// 3. Send one token to each of validators 1-3
 		// 4. Query contract state to confirm balance of all validators and that tokens are correct
 	})
