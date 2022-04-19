@@ -31,14 +31,22 @@ func storeCode(path string, sender types.AccAddress) (wasmtypes.MsgStoreCode, er
 
 func (s *IntegrationTestSuite) TestHappyPath() {
 	s.Run("Bring up chain, and test the happy path", func() {
-		msg, err := storeCode("../contracts/compiled/cw721_metadata_onchain.wasm", s.chain.validators[0].keyInfo.GetAddress())
+		msg, err := storeCode("contracts/compiled/cw721_metadata_onchain.wasm", s.chain.validators[0].keyInfo.GetAddress())
 		s.Require().NoError(err)
 		val := s.chain.validators[0]
 		keyring, err := val.keyring()
 		s.Require().NoError(err)
 		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring, "val", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
-		_, err = s.chain.sendMsgs(*clientCtx, &msg)
+		res, err := s.chain.sendMsgs(*clientCtx, &msg)
 		s.Require().NoError(err)
+		s.Require().Equal(uint32(0), res.Code)
+		events := res.Logs[0].Events
+		event := events[len(events)-1]
+		attrsLen := len(event.Attributes)
+		attr := event.Attributes[attrsLen-1]
+		s.Require().Equal("code_id", attr.Key)
+		s.Require().Equal("1", attr.Value)
+		s.T().Log(res.String())
 	})
 }

@@ -244,7 +244,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	// todo: set wasm genesis state
 	var wasmGenState wasm.GenesisState
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[wasmtypes.ModuleName], &wasmGenState))
-	s.T().Log("wasm config: ", wasmGenState.String())
+	wasmGenState.Params.MaxWasmCodeSize = 1024 * 1024 * 50
 	bz, err = cdc.MarshalJSON(&wasmGenState)
 	s.Require().NoError(err)
 	appGenState[wasmtypes.ModuleName] = bz
