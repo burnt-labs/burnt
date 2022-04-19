@@ -47,6 +47,5 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		attr := event.Attributes[attrsLen-1]
 		s.Require().Equal("code_id", attr.Key)
 		s.Require().Equal("1", attr.Value)
-		s.T().Log(res.String())
 	})
 }
