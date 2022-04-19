@@ -215,7 +215,7 @@ e2e_clean_slate:
 	@cd integration_tests && go test -c
 
 e2e_basic: e2e_clean_slate
-	@integration_tests/integration_tests.test -test.run TestBasicChain -test.failfast -test.v || make -s fail
+	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestBasicChain || make -s fail
 
 e2e_happy_path: e2e_clean_slate
 	integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m TestHappyPath || make -s fail
