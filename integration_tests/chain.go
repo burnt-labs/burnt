@@ -225,14 +225,14 @@ func (c *chain) sendMsgs(clientCtx client.Context, msgs ...sdk.Msg) (*sdk.TxResp
 		}
 	}
 
-	txf.WithFees("246913560testgb")
+	txf.WithFees("246913560testburnt")
 
 	txb, err := tx.BuildUnsignedTx(txf, msgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	txb.SetFeeAmount(sdk.Coins{{Denom: "testgb", Amount: sdk.NewInt(246913560)}})
+	txb.SetFeeAmount(sdk.Coins{{Denom: "testburnt", Amount: sdk.NewInt(246913560)}})
 
 	err = tx.Sign(txf, fromName, txb, false)
 	if err != nil {
