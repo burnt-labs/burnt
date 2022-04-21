@@ -70,10 +70,32 @@ func mintTokenMsg(contract string, sender types.AccAddress, id string, recipient
 	}, nil
 }
 
+func transferTokenMsg(contract string, sender types.AccAddress, recipient types.AccAddress, id string) (wasmtypes.MsgExecuteContract, error) {
+	msg, err := json.Marshal(map[string]interface{}{
+		"transfer_nft": map[string]interface{}{
+			"recipient": recipient.String(),
+			"token_id":  id,
+		},
+	})
+	if err != nil {
+		return wasmtypes.MsgExecuteContract{}, nil
+	}
+	return wasmtypes.MsgExecuteContract{
+		Sender:   sender.String(),
+		Contract: contract,
+		Msg:      msg,
+		Funds:    nil,
+	}, nil
+}
+
 type nftInfoResult struct {
 	Access struct {
 		Owner string `json:"owner"`
 	} `json:"access"`
+}
+
+type tokensResult struct {
+	Tokens []string `json:"tokens"`
 }
 
 func (s *IntegrationTestSuite) TestHappyPath() {
@@ -150,8 +172,34 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		s.T().Log("Found NFT with ID \"badonk-0\"")
 		s.T().Logf("Owner id: %s", owner)
 
-		// TODO(@bigs, @ash)
-		// 3. Send one token to each of validators 1-3
-		// 4. Query contract state to confirm balance of all validators and that tokens are correct
+		otherVal := s.chain.validators[1]
+		s.T().Logf("Sending a token from %s to %s", val.keyInfo.GetAddress().String(), otherVal.keyInfo.GetAddress().String())
+		transferMsg, err := transferTokenMsg(contractAddress, val.keyInfo.GetAddress(), otherVal.keyInfo.GetAddress(), "badonk-0")
+		s.Require().NoError(err)
+		res, err = s.chain.sendMsgs(*clientCtx, &transferMsg)
+		s.Require().NoError(err)
+		s.Require().Zero(res.Code)
+		s.T().Logf("Send successful, querying tokens belonging to %s", otherVal.keyInfo.GetAddress())
+
+		queryData, err = json.Marshal(map[string]interface{}{
+			"tokens": map[string]interface{}{
+				"owner": otherVal.keyInfo.GetAddress(),
+			},
+		})
+		s.Require().NoError(err)
+		contractQueryData = wasmtypes.QuerySmartContractStateRequest{
+			Address:   contractAddress,
+			QueryData: queryData,
+		}
+		qres, err = queryClient.SmartContractState(context.Background(), &contractQueryData)
+		s.Require().NoError(err)
+		var tokens tokensResult
+		err = json.Unmarshal(qres.Data, &tokens)
+		s.Require().NoError(err)
+		s.T().Logf("Found tokens for owner %s:", otherVal.keyInfo.GetAddress())
+		for _, tokenId := range tokens.Tokens {
+			s.T().Logf("- %s", tokenId)
+		}
+		s.Require().Equal([]string{"badonk-0", "badonk-1"}, tokens.Tokens)
 	})
 }
