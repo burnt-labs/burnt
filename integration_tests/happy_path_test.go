@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"strconv"
+
 	wasmutils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/types"
-	"io/ioutil"
-	"strconv"
 )
 
 func storeCode(path string, sender types.AccAddress) (wasmtypes.MsgStoreCode, error) {
@@ -87,9 +88,11 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring, "val", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 
+		s.T().Log("Uploading CW721 NFT contract...")
 		res, err := s.chain.sendMsgs(*clientCtx, &msg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
+		s.T().Log("CW721 NFT contract uploaded successfully")
 
 		events := res.Logs[0].Events
 		event := events[len(events)-1]
@@ -100,7 +103,9 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		codeIdStr := attr.Value
 		codeId, err := strconv.Atoi(codeIdStr)
 		s.Require().NoError(err)
+		s.T().Logf("Found code ID %d for CW721 NFT contract", codeId)
 
+		s.T().Log("Instantiating NFT token contract...")
 		instantiateMsg, err := instantiateContract(uint64(codeId), "Skronk Token Internazionale", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
@@ -111,16 +116,18 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		attr = event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
 		contractAddress := attr.Value
-		s.T().Logf("Contract address: %s", contractAddress)
+		s.T().Logf("NFT token contract instantiated at address: %s", contractAddress)
 
 		for i, otherVal := range s.chain.validators {
 			id := fmt.Sprintf("badonk-%d", i)
 			mintMsg, err := mintTokenMsg(contractAddress, val.keyInfo.GetAddress(), id, otherVal.keyInfo.GetAddress())
+			s.Require().NoError(err)
 			res, err = s.chain.sendMsgs(*clientCtx, &mintMsg)
 			s.Require().NoError(err)
 			s.Require().Zero(res.Code)
 		}
 
+		s.T().Log("Querying contract for information about a token...")
 		queryClient := wasmtypes.NewQueryClient(clientCtx)
 
 		queryData, err := json.Marshal(map[string]interface{}{
@@ -140,6 +147,8 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		s.Require().NoError(err)
 		owner := obj.Access.Owner
 		s.Require().Equal(val.keyInfo.GetAddress().String(), owner)
+		s.T().Log("Found NFT with ID \"badonk-0\"")
+		s.T().Logf("Owner id: %s", owner)
 
 		// TODO(@bigs, @ash)
 		// 3. Send one token to each of validators 1-3
