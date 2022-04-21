@@ -4,3 +4,7 @@ release/
 .idea/
 .vscode/
 .DS_Store
+
+# test generated
+testlogs/
+*.test

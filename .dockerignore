@@ -1,0 +1,5 @@
+integration_tests/
+Dockerfile
+
+.idea/
+.github/
