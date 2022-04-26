@@ -22,12 +22,15 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-        
+
+      - name: Set up docker buildx
+        uses: docker/setup-buildx-action@v1
+
       - name: Prepare Release Variables 
         id: vars
         uses: tendermint/starport/actions/release/vars@develop
 
-      - name: Issue Release Assets 
+      - name: Issue Release Assets
         uses: tendermint/starport/actions/cli@develop
         if: ${{ steps.vars.outputs.should_release == 'true' }}
         with:
@@ -46,16 +49,18 @@ jobs:
         id: meta
         uses: docker/metadata-action@f2a13332ac1ce8c0a71aeac48a150dbb1838ab67
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: BurntFinance/burnt
 
       - name: Build and push docker image
         if: ${{ steps.vars.outputs.should_release == 'true' }}
-        uses: docker/build-push-action@ac9327eae2b366085ac7f6a2d02df8aa8ead720a
+        uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Delete the "latest" Release
         uses: dev-drprasad/delete-tag-and-release@085c6969f18bad0de1b9f3fe6692a3cd01f64fe5
