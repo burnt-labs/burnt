@@ -5,8 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -240,14 +238,6 @@ func (s *IntegrationTestSuite) initGenesis() {
 	bz, err = cdc.MarshalJSON(&genUtilGenState)
 	s.Require().NoError(err)
 	appGenState[genutiltypes.ModuleName] = bz
-
-	// todo: set wasm genesis state
-	var wasmGenState wasm.GenesisState
-	s.Require().NoError(cdc.UnmarshalJSON(appGenState[wasmtypes.ModuleName], &wasmGenState))
-	wasmGenState.Params.MaxWasmCodeSize = 1024 * 1024 * 50
-	bz, err = cdc.MarshalJSON(&wasmGenState)
-	s.Require().NoError(err)
-	appGenState[wasmtypes.ModuleName] = bz
 
 	// serialize genesis state
 	bz, err = json.MarshalIndent(appGenState, "", "  ")
