@@ -107,6 +107,9 @@ import (
 	burntmodule "github.com/BurntFinance/burnt/x/burnt"
 	burntmodulekeeper "github.com/BurntFinance/burnt/x/burnt/keeper"
 	burntmoduletypes "github.com/BurntFinance/burnt/x/burnt/types"
+	schedulemodule "github.com/BurntFinance/burnt/x/schedule"
+	schedulemodulekeeper "github.com/BurntFinance/burnt/x/schedule/keeper"
+	schedulemoduletypes "github.com/BurntFinance/burnt/x/schedule/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -220,6 +223,7 @@ var (
 		vesting.AppModuleBasic{},
 		burntmodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		schedulemodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 
 	)
@@ -295,6 +299,8 @@ type WasmApp struct {
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
 	BurntKeeper burntmodulekeeper.Keeper
+
+	ScheduleKeeper schedulemodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -337,6 +343,7 @@ func NewWasmApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		burntmoduletypes.StoreKey, authzkeeper.StoreKey, wasm.StoreKey,
+		schedulemoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -484,6 +491,14 @@ func NewWasmApp(
 	)
 	burntModule := burntmodule.NewAppModule(appCodec, app.BurntKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.ScheduleKeeper = *schedulemodulekeeper.NewKeeper(
+		appCodec,
+		keys[schedulemoduletypes.StoreKey],
+		keys[schedulemoduletypes.MemStoreKey],
+		app.GetSubspace(schedulemoduletypes.ModuleName),
+	)
+	scheduleModule := schedulemodule.NewAppModule(appCodec, app.ScheduleKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -524,6 +539,7 @@ func NewWasmApp(
 		transferModule,
 		burntModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
+		scheduleModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -605,6 +621,7 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		burntmoduletypes.ModuleName,
+		schedulemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 		wasm.ModuleName,
 	)
@@ -830,6 +847,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(burntmoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
+	paramsKeeper.Subspace(schedulemoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
