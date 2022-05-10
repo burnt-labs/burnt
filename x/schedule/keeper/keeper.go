@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
@@ -95,4 +96,35 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 			break
 		}
 	}
+}
+
+type ScheduledCallPair struct {
+	Key  []byte
+	Call *types.ScheduledCall
+}
+
+func (k Keeper) ScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64) (<-chan ScheduledCallPair, func()) {
+	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
+	iter := prefixStore.Iterator(nil, nil)
+	c, cancel := context.WithCancel(ctx.Context())
+	pairs := make(chan ScheduledCallPair, 1)
+	go func() {
+		defer iter.Close()
+		defer close(pairs)
+		for ; iter.Valid(); iter.Next() {
+			select {
+			case <-c.Done():
+				break
+			default:
+				var call types.ScheduledCall
+				k.cdc.MustUnmarshal(iter.Value(), &call)
+				pairs <- ScheduledCallPair{
+					Key:  iter.Key(),
+					Call: &call,
+				}
+			}
+		}
+	}()
+	return pairs, cancel
 }
