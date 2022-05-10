@@ -2,9 +2,6 @@ package app
 
 import (
 	"fmt"
-	wasmapp "github.com/CosmWasm/wasmd/app"
-	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"io"
 	"net/http"
 	"os"
@@ -96,7 +93,10 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"github.com/tendermint/starport/starport/pkg/openapiconsole"
@@ -222,6 +222,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		burntmodule.AppModuleBasic{},
+		schedulemodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		schedulemodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
@@ -538,6 +539,7 @@ func NewWasmApp(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		burntModule,
+		scheduleModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
 		scheduleModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -846,6 +848,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(burntmoduletypes.ModuleName)
+	paramsKeeper.Subspace(schedulemoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	paramsKeeper.Subspace(schedulemoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
