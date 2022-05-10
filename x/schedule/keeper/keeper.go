@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
@@ -79,6 +78,15 @@ func (k Keeper) RemoveScheduledCall(ctx sdk.Context, signer sdk.AccAddress, cont
 	store.Delete(byHeightKey)
 }
 
+func (k Keeper) RemoveScheduledCallWithBlockHeight(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, functionName string, blockHeight uint64) {
+	store := ctx.KVStore(k.storeKey)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, functionName)
+	store.Delete(byNameKey)
+
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, functionName)
+	store.Delete(byHeightKey)
+}
+
 func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64, cb func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool)) {
 	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
@@ -91,40 +99,9 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 
 		var call types.ScheduledCall
 		k.cdc.MustUnmarshal(iter.Value(), &call)
-		k.RemoveScheduledCall(ctx, signer, contract, call.FunctionName)
+		k.RemoveScheduledCallWithBlockHeight(ctx, signer, contract, call.FunctionName, blockHeight)
 		if cb(signer, contract, &call) {
 			break
 		}
 	}
-}
-
-type ScheduledCallPair struct {
-	Key  []byte
-	Call *types.ScheduledCall
-}
-
-func (k Keeper) ScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64) (<-chan ScheduledCallPair, func()) {
-	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
-	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
-	iter := prefixStore.Iterator(nil, nil)
-	c, cancel := context.WithCancel(ctx.Context())
-	pairs := make(chan ScheduledCallPair, 1)
-	go func() {
-		defer iter.Close()
-		defer close(pairs)
-		for ; iter.Valid(); iter.Next() {
-			select {
-			case <-c.Done():
-				break
-			default:
-				var call types.ScheduledCall
-				k.cdc.MustUnmarshal(iter.Value(), &call)
-				pairs <- ScheduledCallPair{
-					Key:  iter.Key(),
-					Call: &call,
-				}
-			}
-		}
-	}()
-	return pairs, cancel
 }
