@@ -79,6 +79,15 @@ func (k Keeper) RemoveScheduledCall(ctx sdk.Context, signer sdk.AccAddress, cont
 	store.Delete(byHeightKey)
 }
 
+func (k Keeper) RemoveScheduledCallWithBlockHeight(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, functionName string, blockHeight uint64) {
+	store := ctx.KVStore(k.storeKey)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, functionName)
+	store.Delete(byNameKey)
+
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, functionName)
+	store.Delete(byHeightKey)
+}
+
 func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64, cb func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool)) {
 	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
@@ -91,7 +100,7 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 
 		var call types.ScheduledCall
 		k.cdc.MustUnmarshal(iter.Value(), &call)
-		k.RemoveScheduledCall(ctx, signer, contract, call.FunctionName)
+		k.RemoveScheduledCallWithBlockHeight(ctx, signer, contract, call.FunctionName, blockHeight)
 		if cb(signer, contract, &call) {
 			break
 		}
@@ -99,11 +108,12 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 }
 
 type ScheduledCallPair struct {
-	Key  []byte
-	Call *types.ScheduledCall
+	Signer   sdk.AccAddress
+	Contract sdk.AccAddress
+	Call     *types.ScheduledCall
 }
 
-func (k Keeper) ScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64) (<-chan ScheduledCallPair, func()) {
+func (k Keeper) ConsumeScheduledCallsByHeightC(ctx sdk.Context, blockHeight uint64) (<-chan ScheduledCallPair, func()) {
 	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
 	iter := prefixStore.Iterator(nil, nil)
@@ -117,11 +127,16 @@ func (k Keeper) ScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64) (<-c
 			case <-c.Done():
 				break
 			default:
+				key := bytes.NewBuffer(bytes.TrimPrefix(iter.Key(), types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)))
+				signer := sdk.AccAddress(key.Next(20))
+				contract := sdk.AccAddress(key.Next(20))
 				var call types.ScheduledCall
 				k.cdc.MustUnmarshal(iter.Value(), &call)
+				k.RemoveScheduledCallWithBlockHeight(ctx, signer, contract, call.FunctionName, blockHeight)
 				pairs <- ScheduledCallPair{
-					Key:  iter.Key(),
-					Call: &call,
+					Signer:   signer,
+					Contract: contract,
+					Call:     &call,
 				}
 			}
 		}
