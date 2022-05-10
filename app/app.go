@@ -568,6 +568,7 @@ func NewWasmApp(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		burntmoduletypes.ModuleName,
+		schedulemoduletypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -592,6 +593,7 @@ func NewWasmApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		burntmoduletypes.ModuleName,
+		schedulemoduletypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
