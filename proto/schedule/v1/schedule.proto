@@ -1,0 +1,11 @@
+syntax = "proto3";
+package schedule.v1;
+
+import "third_party/cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
+
+message ScheduledCall {
+  string function_name = 1;
+  bytes payer = 2;
+}

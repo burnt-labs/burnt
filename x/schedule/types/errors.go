@@ -8,5 +8,5 @@ import (
 
 // x/schedule module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidScheduledBlockHeight = sdkerrors.Register(ModuleName, 1100, "invalid scheduled block height")
 )

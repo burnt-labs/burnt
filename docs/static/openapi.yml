@@ -32677,6 +32677,8 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
+  BurntFinance.burnt.schedule.MsgAddScheduleResponse:
+    type: object
   BurntFinance.burnt.schedule.Params:
     type: object
     description: Params defines the parameters for the module.
@@ -32687,6 +32689,18 @@ definitions:
         description: params holds all the parameters of this module.
         type: object
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  cosmos.base.v1beta1.Coin:
+    type: object
+    properties:
+      denom:
+        type: string
+      amount:
+        type: string
+    description: |-
+      Coin defines a token with a denomination and an amount.
+
+      NOTE: The amount field is an Int which implements the custom method
+      signatures required by gogoproto.
   cosmos.auth.v1beta1.Params:
     type: object
     properties:
@@ -34664,18 +34678,6 @@ definitions:
     description: |-
       SendEnabled maps coin denom to a send_enabled status (whether a denom is
       sendable).
-  cosmos.base.v1beta1.Coin:
-    type: object
-    properties:
-      denom:
-        type: string
-      amount:
-        type: string
-    description: |-
-      Coin defines a token with a denomination and an amount.
-
-      NOTE: The amount field is an Int which implements the custom method
-      signatures required by gogoproto.
   cosmos.base.tendermint.v1beta1.GetBlockByHeightResponse:
     type: object
     properties:

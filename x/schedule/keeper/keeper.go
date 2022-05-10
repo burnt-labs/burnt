@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -43,4 +44,49 @@ func NewKeeper(
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// Scheduled Calls
+
+func (k Keeper) AddScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, functionName string, blockHeight uint64, payer *sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, functionName)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, functionName)
+
+	value := &types.ScheduledCall{
+		FunctionName: functionName,
+		Payer:        signer.Bytes(),
+	}
+
+	if payer != nil {
+		value.Payer = payer.Bytes()
+	}
+
+	store.Set(byNameKey, sdk.Uint64ToBigEndian(blockHeight))
+	store.Set(byHeightKey, k.cdc.MustMarshal(value))
+}
+
+func (k Keeper) RemoveScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, functionName string) {
+	store := ctx.KVStore(k.storeKey)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, functionName)
+
+	blockHeight := sdk.BigEndianToUint64(store.Get(byNameKey))
+	store.Delete(byNameKey)
+
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, functionName)
+	store.Delete(byHeightKey)
+}
+
+func (k Keeper) IterateScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64, cb func(key []byte, call *types.ScheduledCall) (stop bool)) {
+	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		var call types.ScheduledCall
+		k.cdc.MustUnmarshal(iter.Value(), &call)
+		if cb(iter.Key(), &call) {
+			break
+		}
+	}
 }
