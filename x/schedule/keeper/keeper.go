@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 
@@ -77,15 +78,20 @@ func (k Keeper) RemoveScheduledCall(ctx sdk.Context, signer sdk.AccAddress, cont
 	store.Delete(byHeightKey)
 }
 
-func (k Keeper) IterateScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64, cb func(key []byte, call *types.ScheduledCall) (stop bool)) {
+func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64, cb func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool)) {
 	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
 	iter := prefixStore.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
+		keyPair := bytes.NewBuffer(bytes.TrimPrefix(iter.Key(), types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)))
+		signer := sdk.AccAddress(keyPair.Next(20))
+		contract := sdk.AccAddress(keyPair.Next(20))
+
 		var call types.ScheduledCall
 		k.cdc.MustUnmarshal(iter.Value(), &call)
-		if cb(iter.Key(), &call) {
+		k.RemoveScheduledCall(ctx, signer, contract, call.FunctionName)
+		if cb(signer, contract, &call) {
 			break
 		}
 	}
