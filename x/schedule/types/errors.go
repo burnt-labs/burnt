@@ -9,4 +9,5 @@ import (
 // x/schedule module sentinel errors
 var (
 	ErrInvalidScheduledBlockHeight = sdkerrors.Register(ModuleName, 1100, "invalid scheduled block height")
+	ErrInvalidAllowance            = sdkerrors.Register(ModuleName, 1101, "invalid fee allowance")
 )

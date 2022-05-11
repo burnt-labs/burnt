@@ -116,3 +116,16 @@ On success, we take the next scheduled block from the result of the invocation
 if present and delete the entry from the store and reinsert it under a new key
 prefixed by this block. If there is no block returned, we simply delete it and
 do not reschedule.
+
+## Outstanding Questions
+
+Should we charge more for events scheduled further in the future?
+
+Should we have a cap on how far in the future you can schedule an event?
+
+Should we pay for storage of registered callbacks over time?
+
+x/auth/middleware/validator_tx_fee.go
+This file manages transaction fee calculation
+
+Something is updating the FeeTx with the fees calculated in the GasMeter. What is that?

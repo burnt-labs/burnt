@@ -3,7 +3,6 @@ package app
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,12 +95,8 @@ import (
 	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
-	"github.com/tendermint/starport/starport/pkg/openapiconsole"
-
-	"github.com/BurntFinance/burnt/docs"
 
 	appparams "github.com/BurntFinance/burnt/app/params"
 	burntmodule "github.com/BurntFinance/burnt/x/burnt"
@@ -110,6 +105,7 @@ import (
 	schedulemodule "github.com/BurntFinance/burnt/x/schedule"
 	schedulemodulekeeper "github.com/BurntFinance/burnt/x/schedule/keeper"
 	schedulemoduletypes "github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -497,8 +493,10 @@ func NewWasmApp(
 		keys[schedulemoduletypes.StoreKey],
 		keys[schedulemoduletypes.MemStoreKey],
 		app.GetSubspace(schedulemoduletypes.ModuleName),
+		wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper),
+		app.FeeGrantKeeper,
 	)
-	scheduleModule := schedulemodule.NewAppModule(appCodec, app.ScheduleKeeper, app.AccountKeeper, app.BankKeeper)
+	scheduleModule := schedulemodule.NewAppModule(appCodec, app.ScheduleKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -810,10 +808,6 @@ func (app *WasmApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APICo
 	// Register legacy and grpc-gateway routes for all modules.
 	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-
-	// register app's OpenAPI routes.
-	apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(docs.Docs)))
-	apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
