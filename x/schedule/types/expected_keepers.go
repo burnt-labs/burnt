@@ -2,6 +2,7 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 )
 
@@ -13,4 +14,8 @@ type FeeGrantKeeper interface {
 	GetAllowance(ctx sdk.Context, granter, grantee sdk.AccAddress) (feegrant.FeeAllowanceI, error)
 	IterateAllFeeAllowances(ctx sdk.Context, cb func(grant feegrant.Grant) bool) error
 	UseGrantedFees(ctx sdk.Context, granter, grantee sdk.AccAddress, fee sdk.Coins, msgs []sdk.Msg) error
+}
+
+type BankKeeper interface {
+	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
 }

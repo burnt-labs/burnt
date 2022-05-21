@@ -181,7 +181,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 				Denom:    testDenom,
 				Exponent: 0,
 				Aliases: []string{
-					"tgb",
+					"tb",
 				},
 			},
 		},

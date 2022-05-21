@@ -15,7 +15,7 @@ var _ = strconv.Itoa(0)
 
 func CmdAddSchedule() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-schedule [contract] [function-name] [payer]",
+		Use:   "add-schedule [contract] [function-name] [payer] [block-height]",
 		Short: "Broadcast message add_schedule",
 		Args:  cobra.ExactArgs(3),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -25,6 +25,10 @@ func CmdAddSchedule() *cobra.Command {
 			}
 			argFunctionName := args[1]
 			argPayer, err := sdk.AccAddressFromBech32(args[2])
+			if err != nil {
+				return err
+			}
+			argBlockHeight, err := strconv.Atoi(args[3])
 			if err != nil {
 				return err
 			}
@@ -38,7 +42,8 @@ func CmdAddSchedule() *cobra.Command {
 				clientCtx.GetFromAddress(),
 				argContract,
 				argFunctionName,
-				argPayer,
+				&argPayer,
+				uint64(argBlockHeight),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

@@ -8,5 +8,6 @@ option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
-  
+
+  string gas_denom = 1;
 }

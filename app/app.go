@@ -496,6 +496,7 @@ func NewWasmApp(
 		app.GetSubspace(schedulemoduletypes.ModuleName),
 		wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper),
 		app.FeeGrantKeeper,
+		app.BankKeeper,
 	)
 	scheduleModule := schedulemodule.NewAppModule(appCodec, app.ScheduleKeeper)
 

@@ -21,6 +21,7 @@ type (
 		paramstore     paramtypes.Subspace
 		wasmKeeper     types.WasmKeeper
 		feegrantKeeper types.FeeGrantKeeper
+		bankKeeper     types.BankKeeper
 	}
 )
 
@@ -31,6 +32,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	wasmKeeper types.WasmKeeper,
 	feegrantKeeper types.FeeGrantKeeper,
+	bankKeeper types.BankKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -44,6 +46,7 @@ func NewKeeper(
 		paramstore:     ps,
 		wasmKeeper:     wasmKeeper,
 		feegrantKeeper: feegrantKeeper,
+		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -66,6 +69,8 @@ func (k Keeper) AddScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contrac
 	if payer != nil {
 		value.Payer = payer.Bytes()
 	}
+
+	// todo: check for funds in payer account
 
 	store.Set(byNameKey, sdk.Uint64ToBigEndian(blockHeight))
 	store.Set(byHeightKey, k.cdc.MustMarshal(value))
