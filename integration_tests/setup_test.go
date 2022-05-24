@@ -30,12 +30,6 @@ import (
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 )
 
-const (
-	testDenom      = "testburnt"
-	initBalanceStr = "1000000000000testburnt"
-	minGasPrice    = "2"
-)
-
 func MNEMONICS() []string {
 	return []string{
 		"say monitor orient heart super local purse cricket caution primary bring insane road expect rather help two extend own execute throw nation plunge subject",
