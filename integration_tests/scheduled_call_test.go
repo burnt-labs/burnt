@@ -2,7 +2,6 @@ package integration_tests
 
 import (
 	"context"
-	"encoding/binary"
 	"encoding/json"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -42,7 +41,11 @@ func incrementMsg(contract string, sender types.AccAddress) (wasmtypes.MsgExecut
 	}, nil
 }
 
-func queryCount(ctx *client.Context, addr string) (int32, error) {
+type CountResponse struct {
+	Count int32 `json:"count"`
+}
+
+func queryCount(ctx *client.Context, addr string) (int, error) {
 	queryClient := wasmtypes.NewQueryClient(ctx)
 
 	queryData, err := json.Marshal(map[string]interface{}{
@@ -59,10 +62,13 @@ func queryCount(ctx *client.Context, addr string) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
+	var countResponse CountResponse
+	err = json.Unmarshal(qres.Data, &countResponse)
+	if err != nil {
+		return 0, err
+	}
 
-	count := binary.BigEndian.Uint32(qres.Data)
-
-	return int32(count), nil
+	return int(countResponse.Count), nil
 }
 
 const StartCount = 1337
@@ -113,7 +119,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.T().Log("Querying contract for count")
 		count, err := queryCount(clientCtx, contractAddress)
 		s.Require().NoError(err)
-		s.Require().Equal(count, StartCount)
+		s.Require().Equal(StartCount, count)
 
 		incrementMsg, err := incrementMsg(contractAddress, val.keyInfo.GetAddress())
 		s.Require().NoError(err)
@@ -123,7 +129,6 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 
 		count, err = queryCount(clientCtx, contractAddress)
 		s.Require().NoError(err)
-		s.Require().Equal(count, StartCount+1)
-
+		s.Require().Equal(StartCount+1, count)
 	})
 }
