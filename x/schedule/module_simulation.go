@@ -61,16 +61,16 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
 
-	var weightMsgAddSchedule int
-	simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgAddSchedule, &weightMsgAddSchedule, nil,
-		func(_ *rand.Rand) {
-			weightMsgAddSchedule = defaultWeightMsgAddSchedule
-		},
-	)
-	operations = append(operations, simulation.NewWeightedOperation(
-		weightMsgAddSchedule,
-		schedulesimulation.SimulateMsgAddSchedule(am.accountKeeper, am.bankKeeper, am.keeper),
-	))
+	//var weightMsgAddSchedule int
+	//simState.AppParams.GetOrGenerate(simState.Cdc, opWeightMsgAddSchedule, &weightMsgAddSchedule, nil,
+	//	func(_ *rand.Rand) {
+	//		weightMsgAddSchedule = defaultWeightMsgAddSchedule
+	//	},
+	//)
+	//operations = append(operations, simulation.NewWeightedOperation(
+	//	weightMsgAddSchedule,
+	//	schedulesimulation.SimulateMsgAddSchedule(am.accountKeeper, am.bankKeeper, am.keeper),
+	//))
 
 	// this line is used by starport scaffolding # simapp/module/operation
 

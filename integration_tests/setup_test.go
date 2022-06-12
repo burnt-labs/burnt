@@ -360,6 +360,7 @@ func (s *IntegrationTestSuite) runValidators() {
 					if container.Container.State.Status == "exited" {
 						s.Fail("validators exited", "state: %s logs: \n%s", container.Container.State.String(), s.logsByContainerID(container.Container.ID))
 						s.T().FailNow()
+
 					}
 					s.T().Logf("state: %v, health: %v", container.Container.State.Status, container.Container.State.Health)
 				}
