@@ -68,7 +68,7 @@ jobs:
   integration-tests:
     environment: CI
     runs-on: [self-hosted, linux]
-    needs: [ rust-build, go-build, hardhat-build ]
+    needs: [ go-build ]
     strategy:
       fail-fast: false
       matrix:
