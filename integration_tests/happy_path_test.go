@@ -100,7 +100,7 @@ type tokensResult struct {
 
 func (s *IntegrationTestSuite) TestHappyPath() {
 	s.Run("Bring up chain, and test the happy path", func() {
-		msg, err := storeCode("contracts/compiled/cw721_metadata_onchain.wasm", s.chain.validators[0].keyInfo.GetAddress())
+		msg, err := storeCode("contracts/compiled/cw2981_royalties.optimized.wasm", s.chain.validators[0].keyInfo.GetAddress())
 		s.Require().NoError(err)
 
 		val := s.chain.validators[0]
@@ -110,7 +110,7 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		clientCtx, err := s.chain.clientContext("tcp://localhost:26657", &keyring, "val", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 
-		s.T().Log("Uploading CW721 NFT contract...")
+		s.T().Log("Uploading CW2981 NFT contract...")
 		res, err := s.chain.sendMsgs(*clientCtx, &msg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
