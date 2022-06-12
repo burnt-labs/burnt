@@ -52,8 +52,8 @@ jobs:
       - name: build-and-push
         uses: docker/build-push-action@v2
         with:
-          context: ./module
-          file: module/Dockerfile
+          context: .
+          file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
