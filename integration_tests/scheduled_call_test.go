@@ -185,9 +185,6 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			calls, err := queryScheduledCalls(clientCtx)
 			s.Require().NoError(err)
 			for _, call := range calls {
-				callContract, err := types.AccAddressFromBech32(call.Contract)
-				s.Require().NoError(err)
-				s.T().Logf("expected %s %b; got %s %b", contract.String(), contract, callContract.String(), callContract)
 				if call.Contract == contract.String() && call.Height == scheduledBlockHeight {
 					return true
 				}
