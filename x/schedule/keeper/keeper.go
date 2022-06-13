@@ -96,6 +96,23 @@ func (k Keeper) RemoveScheduledCallWithBlockHeight(ctx sdk.Context, signer sdk.A
 	store.Delete(byHeightKey)
 }
 
+func (k Keeper) iterateScheduledCalls(ctx sdk.Context, cb func(height uint64, signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool)) {
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), []byte{types.ScheduledCallByBlockHeightKeyPrefix})
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		keyPair := bytes.NewBuffer(bytes.TrimPrefix(iter.Key(), []byte{types.ScheduledCallByBlockHeightKeyPrefix}))
+		blockHeight := sdk.BigEndianToUint64(keyPair.Next(8))
+		signer := sdk.AccAddress(keyPair.Next(20))
+		contract := sdk.AccAddress(keyPair.Next(20))
+		var call types.ScheduledCall
+		k.cdc.MustUnmarshal(iter.Value(), &call)
+		if cb(blockHeight, signer, contract, &call) {
+			break
+		}
+	}
+}
+
 func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint64, cb func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool)) {
 	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
 	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)

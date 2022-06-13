@@ -15,6 +15,9 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/BurntFinance/burnt/schedule/params";
   }
+  rpc ScheduledCalls(QueryScheduledCallsRequest) returns (QueryScheduledCallsResponse) {
+    option (google.api.http).get = "/BurntFinance/burnt/schedule/scheduled_calls";
+  }
   // this line is used by starport scaffolding # 2
 }
 
@@ -28,3 +31,19 @@ message QueryParamsResponse {
 }
 
 // this line is used by starport scaffolding # 3
+
+message QueryScheduledCallsRequest{
+  string contract = 1;
+}
+
+message QueryScheduledCall {
+  string contract = 1;
+  string function_name = 2;
+  bytes payer = 3;
+  uint64 height = 4;
+  bytes signer = 5;
+}
+
+message QueryScheduledCallsResponse{
+  repeated QueryScheduledCall calls = 1;
+}

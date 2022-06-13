@@ -73,7 +73,7 @@ func queryCount(ctx *client.Context, addr string) (int, error) {
 	return int(countResponse.Count), nil
 }
 
-func currentBlockHeight(clientCtx client.Context) (uint64, error) {
+func currentBlockHeight(clientCtx *client.Context) (uint64, error) {
 	node, err := clientCtx.GetNode()
 	if err != nil {
 		return 0, err
@@ -85,10 +85,15 @@ func currentBlockHeight(clientCtx client.Context) (uint64, error) {
 	return uint64(status.SyncInfo.LatestBlockHeight), nil
 }
 
-//func queryScheduledCalls(clientCtx *client.Context) (error) {
-//	queryClient := scheduletypes.NewQueryClient(clientCtx)
-//	res, err := queryClient.
-//}
+func queryScheduledCalls(clientCtx *client.Context) ([]*scheduletypes.QueryScheduledCall, error) {
+	queryClient := scheduletypes.NewQueryClient(clientCtx)
+	res, err := queryClient.ScheduledCalls(context.Background(), &scheduletypes.QueryScheduledCallsRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Calls, nil
+}
 
 const StartCount = 1337
 
@@ -154,7 +159,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().Equal(CurrentCount, count)
 
 		// query current block height
-		blockHeight, err := currentBlockHeight(*clientCtx)
+		blockHeight, err := currentBlockHeight(clientCtx)
 		s.Require().NoError(err)
 		s.T().Logf("current block height %d", blockHeight)
 
@@ -169,10 +174,26 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		}
 		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
 		s.Require().NoError(err)
+		s.T().Logf("scheduled call for height %d", scheduledBlockHeight)
+
+		// verify the call was scheduled
+		s.Require().Eventuallyf(func() bool {
+			height, err := currentBlockHeight(clientCtx)
+			s.Require().NoError(err)
+			calls, err := queryScheduledCalls(clientCtx)
+			s.Require().NoError(err)
+			for _, call := range calls {
+				if call.Contract == contractAddress && call.Height == scheduledBlockHeight {
+					return true
+				}
+			}
+			s.T().Logf("queried scheduled calls at block %d, got %v", height, calls)
+			return false
+		}, time.Second*30, time.Second*5, "never found scheduled call")
 
 		// watch the blocks and check if the count has updated
 		s.Require().Eventuallyf(func() bool {
-			blockHeight, err = currentBlockHeight(*clientCtx)
+			blockHeight, err = currentBlockHeight(clientCtx)
 			s.Require().NoError(err)
 			if blockHeight < scheduledBlockHeight {
 				count, err = queryCount(clientCtx, contractAddress)
