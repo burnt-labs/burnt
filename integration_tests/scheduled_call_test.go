@@ -3,10 +3,12 @@ package integration_tests
 import (
 	"context"
 	"encoding/json"
+	scheduletypes "github.com/BurntFinance/burnt/x/schedule/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/types"
 	"strconv"
+	"time"
 )
 
 func instantiateTickerContract(codeId uint64, label string, sender types.AccAddress, count int32) (wasmtypes.MsgInstantiateContract, error) {
@@ -71,7 +73,26 @@ func queryCount(ctx *client.Context, addr string) (int, error) {
 	return int(countResponse.Count), nil
 }
 
+func currentBlockHeight(clientCtx client.Context) (uint64, error) {
+	node, err := clientCtx.GetNode()
+	if err != nil {
+		return 0, err
+	}
+	status, err := node.Status(context.Background())
+	if err != nil {
+		return 0, err
+	}
+	return uint64(status.SyncInfo.LatestBlockHeight), nil
+}
+
+//func queryScheduledCalls(clientCtx *client.Context) (error) {
+//	queryClient := scheduletypes.NewQueryClient(clientCtx)
+//	res, err := queryClient.
+//}
+
 const StartCount = 1337
+
+var CurrentCount = StartCount
 
 func (s *IntegrationTestSuite) TestScheduledCall() {
 	s.Run("Bring up chain, and test the schedule module", func() {
@@ -126,9 +147,44 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		res, err = s.chain.sendMsgs(*clientCtx, &incrementMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
+		CurrentCount += 1
 
 		count, err = queryCount(clientCtx, contractAddress)
 		s.Require().NoError(err)
-		s.Require().Equal(StartCount+1, count)
+		s.Require().Equal(CurrentCount, count)
+
+		// query current block height
+		blockHeight, err := currentBlockHeight(*clientCtx)
+		s.Require().NoError(err)
+		s.T().Logf("current block height %d", blockHeight)
+
+		// schedule the call
+		scheduledBlockHeight := blockHeight + 10
+		scheduleMsg := scheduletypes.MsgAddSchedule{
+			Signer:       val.keyInfo.GetAddress().String(),
+			Contract:     contractAddress,
+			FunctionName: "scheduled_increment",
+			Payer:        val.keyInfo.GetAddress().String(),
+			BlockHeight:  scheduledBlockHeight,
+		}
+		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
+		s.Require().NoError(err)
+
+		// watch the blocks and check if the count has updated
+		s.Require().Eventuallyf(func() bool {
+			blockHeight, err = currentBlockHeight(*clientCtx)
+			s.Require().NoError(err)
+			if blockHeight < scheduledBlockHeight {
+				count, err = queryCount(clientCtx, contractAddress)
+				s.Require().NoError(err)
+				s.Require().Equal(count, CurrentCount, "count was updated before schedule")
+			} else {
+				count, err = queryCount(clientCtx, contractAddress)
+				s.Require().NoError(err)
+				s.Require().Equal(count, CurrentCount+1, "count was not updated after schedule")
+			}
+
+			return false
+		}, time.Minute*2, time.Second*10, "never found an incremented count after the scheduled height")
 	})
 }
