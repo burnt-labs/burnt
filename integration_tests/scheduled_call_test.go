@@ -139,22 +139,24 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		attr = event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
 		contractAddress := attr.Value
-		s.T().Logf("ticker contract instantiated at address: %s", contractAddress)
+		contract, err := types.AccAddressFromBech32(contractAddress)
+		s.Require().NoError(err)
+		s.T().Logf("ticker contract instantiated at address: %s", contract.String())
 
 		// baseline tests to make sure the contract behaves as expected
 		s.T().Log("Querying contract for count")
-		count, err := queryCount(clientCtx, contractAddress)
+		count, err := queryCount(clientCtx, contract.String())
 		s.Require().NoError(err)
 		s.Require().Equal(StartCount, count)
 
-		incrementMsg, err := incrementMsg(contractAddress, val.keyInfo.GetAddress())
+		incrementMsg, err := incrementMsg(contract.String(), val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &incrementMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
 		CurrentCount += 1
 
-		count, err = queryCount(clientCtx, contractAddress)
+		count, err = queryCount(clientCtx, contract.String())
 		s.Require().NoError(err)
 		s.Require().Equal(CurrentCount, count)
 
@@ -167,14 +169,14 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		scheduledBlockHeight := blockHeight + 10
 		scheduleMsg := scheduletypes.MsgAddSchedule{
 			Signer:       val.keyInfo.GetAddress().String(),
-			Contract:     contractAddress,
+			Contract:     contract.String(),
 			FunctionName: "scheduled_increment",
 			Payer:        val.keyInfo.GetAddress().String(),
 			BlockHeight:  scheduledBlockHeight,
 		}
 		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
 		s.Require().NoError(err)
-		s.T().Logf("scheduled call for height %d", scheduledBlockHeight)
+		s.T().Logf("scheduled call for height %d with %v", scheduledBlockHeight, scheduleMsg)
 
 		// verify the call was scheduled
 		s.Require().Eventuallyf(func() bool {
@@ -183,24 +185,27 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			calls, err := queryScheduledCalls(clientCtx)
 			s.Require().NoError(err)
 			for _, call := range calls {
-				if call.Contract == contractAddress && call.Height == scheduledBlockHeight {
+				callContract, err := types.AccAddressFromBech32(call.Contract)
+				s.Require().NoError(err)
+				s.T().Logf("expected %s %b; got %s %b", contract.String(), contract, callContract.String(), callContract)
+				if call.Contract == contract.String() && call.Height == scheduledBlockHeight {
 					return true
 				}
 			}
 			s.T().Logf("queried scheduled calls at block %d, got %v", height, calls)
 			return false
-		}, time.Second*30, time.Second*5, "never found scheduled call")
+		}, time.Second*20, time.Second*3, "never found scheduled call")
 
 		// watch the blocks and check if the count has updated
 		s.Require().Eventuallyf(func() bool {
 			blockHeight, err = currentBlockHeight(clientCtx)
 			s.Require().NoError(err)
 			if blockHeight < scheduledBlockHeight {
-				count, err = queryCount(clientCtx, contractAddress)
+				count, err = queryCount(clientCtx, contract.String())
 				s.Require().NoError(err)
 				s.Require().Equal(count, CurrentCount, "count was updated before schedule")
 			} else if blockHeight > scheduledBlockHeight {
-				count, err = queryCount(clientCtx, contractAddress)
+				count, err = queryCount(clientCtx, contract.String())
 				s.Require().NoError(err)
 				s.Require().Equal(count, CurrentCount+1, "count was not updated after schedule")
 				return true
