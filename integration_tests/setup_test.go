@@ -100,12 +100,15 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 	s.T().Log("tearing down e2e integration test suite...")
 
+	s.T().Log("removing data directory")
 	s.Require().NoError(os.RemoveAll(s.chain.dataDir))
 
+	s.T().Log("removing containers")
 	for _, vc := range s.valResources {
 		s.Require().NoError(s.dockerPool.Purge(vc))
 	}
 
+	s.T().Log("removing network")
 	s.Require().NoError(s.dockerPool.RemoveNetwork(s.dockerNetwork))
 }
 

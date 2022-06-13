@@ -178,10 +178,11 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 				count, err = queryCount(clientCtx, contractAddress)
 				s.Require().NoError(err)
 				s.Require().Equal(count, CurrentCount, "count was updated before schedule")
-			} else {
+			} else if blockHeight > scheduledBlockHeight {
 				count, err = queryCount(clientCtx, contractAddress)
 				s.Require().NoError(err)
 				s.Require().Equal(count, CurrentCount+1, "count was not updated after schedule")
+				return true
 			}
 
 			return false

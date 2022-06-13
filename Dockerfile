@@ -35,10 +35,14 @@ FROM alpine:3.15
 
 COPY --from=go-builder /code/build/burntd /usr/bin/burntd
 
-COPY docker/* /opt/
-RUN chmod +x /opt/*.sh
+#COPY docker/* /opt/
+#RUN chmod +x /opt/*.sh
+#
+#WORKDIR /opt
 
-WORKDIR /opt
+WORKDIR /root
+RUN mkdir /root/.burnt
+RUN chmod 777 /root/.burnt
 
 # rest server
 EXPOSE 1317
