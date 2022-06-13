@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/json"
 	"github.com/BurntFinance/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
@@ -26,6 +27,12 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 		// todo: construct a message with call info
 		var msg []byte
+		msg, err := json.Marshal(map[string]interface{}{
+			call.FunctionName: map[string]interface{}{},
+		})
+		if err != nil {
+			k.Logger(ctx).Error("unable to marshal wasm call with function %s", call.FunctionName)
+		}
 
 		result, err := k.wasmKeeper.Execute(gasCtx, contract, signer, msg, nil)
 		if err != nil {
