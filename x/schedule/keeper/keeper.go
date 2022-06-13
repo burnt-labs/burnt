@@ -104,7 +104,7 @@ func (k Keeper) iterateScheduledCalls(ctx sdk.Context, cb func(height uint64, si
 		keyPair := bytes.NewBuffer(bytes.TrimPrefix(iter.Key(), []byte{types.ScheduledCallByBlockHeightKeyPrefix}))
 		blockHeight := sdk.BigEndianToUint64(keyPair.Next(8))
 		signer := sdk.AccAddress(keyPair.Next(20))
-		contract := sdk.AccAddress(keyPair.Next(20))
+		contract := sdk.AccAddress(keyPair.Next(32))
 		var call types.ScheduledCall
 		k.cdc.MustUnmarshal(iter.Value(), &call)
 		if cb(blockHeight, signer, contract, &call) {
@@ -121,7 +121,7 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 	for ; iter.Valid(); iter.Next() {
 		keyPair := bytes.NewBuffer(bytes.TrimPrefix(iter.Key(), types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)))
 		signer := sdk.AccAddress(keyPair.Next(20))
-		contract := sdk.AccAddress(keyPair.Next(20))
+		contract := sdk.AccAddress(keyPair.Next(32))
 
 		var call types.ScheduledCall
 		k.cdc.MustUnmarshal(iter.Value(), &call)
