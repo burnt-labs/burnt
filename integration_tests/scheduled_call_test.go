@@ -210,5 +210,8 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 
 			return false
 		}, time.Minute*2, time.Second*10, "never found an incremented count after the scheduled height")
+
+		// todo: same test, but when the call returns a reschedule. validate it
+		// updated, that the new height was recorded, and eventually consumed
 	})
 }
