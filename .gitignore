@@ -8,3 +8,6 @@ release/
 # test generated
 testlogs/
 *.test
+
+# intellij
+*.iml

@@ -33,7 +33,7 @@ func storeCode(path string, sender types.AccAddress) (wasmtypes.MsgStoreCode, er
 	}, nil
 }
 
-func instantiateContract(codeId uint64, label string, sender types.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
+func instantiateNFTContract(codeId uint64, label string, sender types.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
 	msg, err := json.Marshal(map[string]interface{}{
 		"minter": sender.String(),
 		"name":   label,
@@ -128,7 +128,7 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		s.T().Logf("Found code ID %d for CW721 NFT contract", codeId)
 
 		s.T().Log("Instantiating NFT token contract...")
-		instantiateMsg, err := instantiateContract(uint64(codeId), "Skronk Token Internazionale", val.keyInfo.GetAddress())
+		instantiateMsg, err := instantiateNFTContract(uint64(codeId), "Skronk Token Internazionale", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)

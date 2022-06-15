@@ -100,12 +100,15 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 	s.T().Log("tearing down e2e integration test suite...")
 
+	s.T().Log("removing data directory")
 	s.Require().NoError(os.RemoveAll(s.chain.dataDir))
 
+	s.T().Log("removing containers")
 	for _, vc := range s.valResources {
 		s.Require().NoError(s.dockerPool.Purge(vc))
 	}
 
+	s.T().Log("removing network")
 	s.Require().NoError(s.dockerPool.RemoveNetwork(s.dockerNetwork))
 }
 
@@ -175,7 +178,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 				Denom:    testDenom,
 				Exponent: 0,
 				Aliases: []string{
-					"tgb",
+					"tb",
 				},
 			},
 		},
@@ -354,6 +357,7 @@ func (s *IntegrationTestSuite) runValidators() {
 					if container.Container.State.Status == "exited" {
 						s.Fail("validators exited", "state: %s logs: \n%s", container.Container.State.String(), s.logsByContainerID(container.Container.ID))
 						s.T().FailNow()
+
 					}
 					s.T().Logf("state: %v, health: %v", container.Container.State.Status, container.Container.State.Health)
 				}

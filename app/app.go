@@ -2,11 +2,7 @@ package app
 
 import (
 	"fmt"
-	wasmapp "github.com/CosmWasm/wasmd/app"
-	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -96,17 +92,20 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
-
-	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
-	"github.com/tendermint/starport/starport/pkg/openapiconsole"
-
-	"github.com/BurntFinance/burnt/docs"
+	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	appparams "github.com/BurntFinance/burnt/app/params"
 	burntmodule "github.com/BurntFinance/burnt/x/burnt"
 	burntmodulekeeper "github.com/BurntFinance/burnt/x/burnt/keeper"
 	burntmoduletypes "github.com/BurntFinance/burnt/x/burnt/types"
+	schedulemodule "github.com/BurntFinance/burnt/x/schedule"
+	schedulemodulekeeper "github.com/BurntFinance/burnt/x/schedule/keeper"
+	schedulemoduletypes "github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -219,7 +218,9 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		burntmodule.AppModuleBasic{},
+		schedulemodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
+		schedulemodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 
 	)
@@ -233,6 +234,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		schedulemoduletypes.ModuleName: {authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -295,6 +297,8 @@ type WasmApp struct {
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
 	BurntKeeper burntmodulekeeper.Keeper
+
+	ScheduleKeeper schedulemodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -337,6 +341,7 @@ func NewWasmApp(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		burntmoduletypes.StoreKey, authzkeeper.StoreKey, wasm.StoreKey,
+		schedulemoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -484,6 +489,17 @@ func NewWasmApp(
 	)
 	burntModule := burntmodule.NewAppModule(appCodec, app.BurntKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.ScheduleKeeper = *schedulemodulekeeper.NewKeeper(
+		appCodec,
+		keys[schedulemoduletypes.StoreKey],
+		keys[schedulemoduletypes.MemStoreKey],
+		app.GetSubspace(schedulemoduletypes.ModuleName),
+		wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper),
+		app.FeeGrantKeeper,
+		app.BankKeeper,
+	)
+	scheduleModule := schedulemodule.NewAppModule(appCodec, app.ScheduleKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -523,13 +539,15 @@ func NewWasmApp(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		burntModule,
+		scheduleModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper),
+		scheduleModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
-	// there is nothing left over in the validator fee pool, so as to keep the
+	// there is nothing left over in the validator fee pool, to keep the
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	app.mm.SetOrderBeginBlockers(
@@ -550,6 +568,7 @@ func NewWasmApp(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		burntmoduletypes.ModuleName,
+		schedulemoduletypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -574,6 +593,7 @@ func NewWasmApp(
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
 		burntmoduletypes.ModuleName,
+		schedulemoduletypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -605,6 +625,7 @@ func NewWasmApp(
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
 		burntmoduletypes.ModuleName,
+		schedulemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 		wasm.ModuleName,
 	)
@@ -789,10 +810,6 @@ func (app *WasmApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APICo
 	// Register legacy and grpc-gateway routes for all modules.
 	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
-
-	// register app's OpenAPI routes.
-	apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(docs.Docs)))
-	apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
@@ -829,6 +846,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(burntmoduletypes.ModuleName)
+	paramsKeeper.Subspace(schedulemoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
