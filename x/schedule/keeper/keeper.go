@@ -70,8 +70,6 @@ func (k Keeper) AddScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contrac
 		value.Payer = payer.Bytes()
 	}
 
-	// todo: check for funds in payer account
-
 	store.Set(byNameKey, sdk.Uint64ToBigEndian(blockHeight))
 	store.Set(byHeightKey, k.cdc.MustMarshal(value))
 }

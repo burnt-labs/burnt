@@ -26,4 +26,4 @@ message MsgAddSchedule {
 message MsgAddScheduleResponse {
 }
 
-// this line is used by starport scaffolding # proto/tx/message
+// this line is used by starport scaffolding # proto/tx/message1

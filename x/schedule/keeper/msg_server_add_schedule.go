@@ -19,8 +19,6 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 		return nil, err
 	}
 
-	// todo: check that payer has grant from signer
-	// todo: check that payer has minimum balance for call
 	payer, err := sdk.AccAddressFromBech32(msg.Payer)
 	if err != nil {
 		return nil, err
@@ -29,6 +27,22 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 	contract, err := sdk.AccAddressFromBech32(msg.Contract)
 	if err != nil {
 		return nil, err
+	}
+
+	gasDenom := k.GetParams(ctx).GasDenom
+	payingAccount := signer
+	if !payer.Equals(signer) {
+		payingAccount = payer
+	}
+	limits, err := k.determineGasLimit(ctx, payingAccount, signer)
+	if err != nil {
+		panic(err)
+	}
+	balance := k.bankKeeper.GetBalance(ctx, payingAccount, gasDenom)
+	limit := limits.AmountOfNoDenomValidation(gasDenom)
+	if limit.LT(balance.Amount) {
+		// the payer doesn't have the funds
+		return nil, types.ErrInvalidAllowance
 	}
 
 	k.AddScheduledCall(ctx, signer, contract, msg.FunctionName, msg.BlockHeight, &payer)

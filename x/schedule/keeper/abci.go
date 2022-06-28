@@ -9,24 +9,23 @@ import (
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
 	gasDenom := k.GetParams(ctx).GasDenom
-	// k.bankKeeper.GetDenomMetaData(ctx, gasDenom) // is this needed?
 	k.ConsumeScheduledCallsByHeight(ctx, uint64(ctx.BlockHeight()), func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool) {
 		payer := sdk.AccAddress(call.Payer)
-		gasCtx := ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
+		payingAccount := signer
 		if !payer.Equals(signer) {
-			limits, err := k.determineGasLimit(ctx, payer, signer)
-			if err != nil {
-				panic(err)
-			}
-			for _, coin := range limits {
-				if coin.Denom == gasDenom {
-					// todo: check for minimal available funds here
-				}
-			}
+			payingAccount = payer
+		}
+		limits, err := k.determineGasLimit(ctx, payingAccount, signer)
+		if err != nil {
+			panic(err)
+		}
+		balance := k.bankKeeper.GetBalance(ctx, payingAccount, gasDenom)
+		limit := limits.AmountOfNoDenomValidation(gasDenom)
+		if limit.LT(balance.Amount) {
+			// the payer doesn't have the funds
+			return false
 		}
 
-		// todo: construct a message with call info
-		var msg []byte
 		msg, err := json.Marshal(map[string]interface{}{
 			call.FunctionName: map[string]interface{}{},
 		})
@@ -34,6 +33,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			k.Logger(ctx).Error("unable to marshal wasm call with function %s", call.FunctionName)
 		}
 
+		gasCtx := ctx.WithGasMeter(sdk.NewInfiniteGasMeter())
 		result, err := k.wasmKeeper.Execute(gasCtx, contract, signer, msg, nil)
 		if err != nil {
 			k.Logger(ctx).Error("error executing scheduled wasm call",
