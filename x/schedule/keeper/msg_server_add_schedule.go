@@ -29,6 +29,8 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 		return nil, err
 	}
 
+	// todo: anti spam protection. how do we keep this from getting blown up for free?
+
 	gasDenom := k.GetParams(ctx).GasDenom
 	payingAccount := signer
 	if !payer.Equals(signer) {
