@@ -220,7 +220,6 @@ var (
 		burntmodule.AppModuleBasic{},
 		schedulemodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
-		schedulemodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 
 	)
@@ -494,6 +493,7 @@ func NewWasmApp(
 		keys[schedulemoduletypes.StoreKey],
 		keys[schedulemoduletypes.MemStoreKey],
 		app.GetSubspace(schedulemoduletypes.ModuleName),
+		app.WasmKeeper,
 		wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper),
 		app.FeeGrantKeeper,
 		app.BankKeeper,

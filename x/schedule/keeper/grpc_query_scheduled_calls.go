@@ -18,11 +18,10 @@ func (k Keeper) ScheduledCalls(c context.Context, req *types.QueryScheduledCalls
 	var scheduledCalls []*types.QueryScheduledCall
 	k.iterateScheduledCalls(ctx, func(height uint64, signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool) {
 		scheduledCall := types.QueryScheduledCall{
-			Contract:     contract.String(),
-			FunctionName: call.FunctionName,
-			Payer:        call.Payer,
-			Height:       height,
-			Signer:       signer,
+			Contract: contract.String(),
+			CallBody: call.CallBody,
+			Height:   height,
+			Signer:   signer,
 		}
 		scheduledCalls = append(scheduledCalls, &scheduledCall)
 		return false

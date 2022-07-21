@@ -18,8 +18,7 @@ service Msg {
 message MsgAddSchedule {
   string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string contract = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string functionName = 3;
-  string payer = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  bytes call_body = 3;
   uint64 block_height = 5;
 }
 

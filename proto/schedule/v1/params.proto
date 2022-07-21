@@ -10,4 +10,6 @@ message Params {
   option (gogoproto.goproto_stringer) = false;
 
   string gas_denom = 1;
+  uint64 scheduled_balance_minimum = 2;
+  bytes fee_receiver = 3;
 }

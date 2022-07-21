@@ -168,11 +168,10 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		// schedule the call
 		scheduledBlockHeight := blockHeight + 10
 		scheduleMsg := scheduletypes.MsgAddSchedule{
-			Signer:       val.keyInfo.GetAddress().String(),
-			Contract:     contract.String(),
-			FunctionName: "scheduled_increment",
-			Payer:        val.keyInfo.GetAddress().String(),
-			BlockHeight:  scheduledBlockHeight,
+			Signer:      val.keyInfo.GetAddress().String(),
+			Contract:    contract.String(),
+			CallBody:    []byte("replace this with proxy call"),
+			BlockHeight: scheduledBlockHeight,
 		}
 		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
 		s.Require().NoError(err)

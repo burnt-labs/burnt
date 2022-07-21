@@ -6,7 +6,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 )
 
-type WasmKeeper interface {
+type WasmViewKeeper interface {
+	QuerySmart(ctx sdk.Context, contractAddr sdk.AccAddress, req []byte) ([]byte, error)
+}
+
+type WasmPermissionedKeeper interface {
 	Execute(ctx sdk.Context, contractAddress sdk.AccAddress, caller sdk.AccAddress, msg []byte, coins sdk.Coins) ([]byte, error)
 }
 
@@ -19,4 +23,5 @@ type FeeGrantKeeper interface {
 type BankKeeper interface {
 	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
 	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
 }
