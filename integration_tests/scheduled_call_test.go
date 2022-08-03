@@ -16,7 +16,7 @@ func instantiateTickerContract(codeId uint64, label string, sender types.AccAddr
 		"count": count,
 	})
 	if err != nil {
-		return wasmtypes.MsgInstantiateContract{}, nil
+		return wasmtypes.MsgInstantiateContract{}, err
 	}
 	return wasmtypes.MsgInstantiateContract{
 		Sender: sender.String(),
@@ -28,12 +28,27 @@ func instantiateTickerContract(codeId uint64, label string, sender types.AccAddr
 	}, nil
 }
 
-func incrementMsg(contract string, sender types.AccAddress) (wasmtypes.MsgExecuteContract, error) {
+func instantiateProxyContract(codeId uint64, label string, sender types.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
+	msg, err := json.Marshal(map[string]interface{}{})
+	if err != nil {
+		return wasmtypes.MsgInstantiateContract{}, err
+	}
+	return wasmtypes.MsgInstantiateContract{
+		Sender: sender.String(),
+		Admin:  sender.String(),
+		CodeID: codeId,
+		Label:  label,
+		Msg:    msg,
+		Funds:  nil,
+	}, nil
+}
+
+func tickerIncrementMsg(contract string, sender types.AccAddress) (wasmtypes.MsgExecuteContract, error) {
 	msg, err := json.Marshal(map[string]interface{}{
 		"increment": map[string]interface{}{},
 	})
 	if err != nil {
-		return wasmtypes.MsgExecuteContract{}, nil
+		return wasmtypes.MsgExecuteContract{}, err
 	}
 	return wasmtypes.MsgExecuteContract{
 		Sender:   sender.String(),
@@ -43,11 +58,43 @@ func incrementMsg(contract string, sender types.AccAddress) (wasmtypes.MsgExecut
 	}, nil
 }
 
-type CountResponse struct {
+type TickerCountResponse struct {
 	Count int32 `json:"count"`
 }
 
-func queryCount(ctx *client.Context, addr string) (int, error) {
+type ProxyIsOwnerResponse struct {
+	IsOwner bool `json:"is_owner"`
+}
+
+func queryIsProxyOwner(ctx *client.Context, addr string, owner types.AccAddress) (bool, error) {
+	queryClient := wasmtypes.NewQueryClient(ctx)
+
+	queryData, err := json.Marshal(map[string]interface{}{
+		"is_owner": map[string]interface{}{
+			"owner": owner,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+	contractQueryData := wasmtypes.QuerySmartContractStateRequest{
+		Address:   addr,
+		QueryData: queryData,
+	}
+	qres, err := queryClient.SmartContractState(context.Background(), &contractQueryData)
+	if err != nil {
+		return false, err
+	}
+	var res ProxyIsOwnerResponse
+	err = json.Unmarshal(qres.Data, &res)
+	if err != nil {
+		return false, err
+	}
+
+	return res.IsOwner, nil
+}
+
+func queryTickerCount(ctx *client.Context, addr string) (int, error) {
 	queryClient := wasmtypes.NewQueryClient(ctx)
 
 	queryData, err := json.Marshal(map[string]interface{}{
@@ -64,7 +111,7 @@ func queryCount(ctx *client.Context, addr string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	var countResponse CountResponse
+	var countResponse TickerCountResponse
 	err = json.Unmarshal(qres.Data, &countResponse)
 	if err != nil {
 		return 0, err
@@ -95,13 +142,32 @@ func queryScheduledCalls(clientCtx *client.Context) ([]*scheduletypes.QuerySched
 	return res.Calls, nil
 }
 
+func makeProxyIncrementMsg(address types.AccAddress) ([]byte, error) {
+	incrementMsg, err := json.Marshal(map[string]interface{}{
+		"increment": map[string]interface{}{},
+	})
+
+	proxyIncrementMsg, err := json.Marshal(map[string]interface{}{
+		"destination_address": address,
+		"message_to_forward":  incrementMsg,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return proxyIncrementMsg, nil
+}
+
 const StartCount = 1337
 
 var CurrentCount = StartCount
 
 func (s *IntegrationTestSuite) TestScheduledCall() {
 	s.Run("Bring up chain, and test the schedule module", func() {
-		msg, err := storeCode("contracts/compiled/ticker.wasm", s.chain.validators[0].keyInfo.GetAddress())
+		uploadTickerMsg, err := storeCode("contracts/compiled/ticker.wasm", s.chain.validators[0].keyInfo.GetAddress())
+		s.Require().NoError(err)
+
+		uploadProxyMsg, err := storeCode("contracts/compiled/proxy.wasm", s.chain.validators[0].keyInfo.GetAddress())
 		s.Require().NoError(err)
 
 		val := s.chain.validators[0]
@@ -112,7 +178,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().NoError(err)
 
 		s.T().Log("Uploading ticker contract...")
-		res, err := s.chain.sendMsgs(*clientCtx, &msg)
+		res, err := s.chain.sendMsgs(*clientCtx, &uploadTickerMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
 		s.T().Log("ticker contract uploaded successfully")
@@ -123,13 +189,28 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		attr := event.Attributes[attrsLen-1]
 		s.Require().Equal("code_id", attr.Key)
 
-		codeIdStr := attr.Value
-		codeId, err := strconv.Atoi(codeIdStr)
+		tickerCodeId, err := strconv.Atoi(attr.Value)
 		s.Require().NoError(err)
-		s.T().Logf("Found code ID %d for ticker contract", codeId)
+		s.T().Logf("Found code ID %d for ticker contract", tickerCodeId)
+
+		s.T().Log("Uploading proxy contract...")
+		res, err = s.chain.sendMsgs(*clientCtx, &uploadProxyMsg)
+		s.Require().NoError(err)
+		s.Require().Zero(res.Code)
+		s.T().Log("proxy contract uploaded successfully")
+
+		events = res.Logs[0].Events
+		event = events[len(events)-1]
+		attrsLen = len(event.Attributes)
+		attr = event.Attributes[attrsLen-1]
+		s.Require().Equal("code_id", attr.Key)
+
+		proxyCodeId, err := strconv.Atoi(attr.Value)
+		s.Require().NoError(err)
+		s.T().Logf("Found code ID %d for proxy contract", proxyCodeId)
 
 		s.T().Log("Instantiating ticker contract...")
-		instantiateMsg, err := instantiateTickerContract(uint64(codeId), "test ticker", val.keyInfo.GetAddress(), StartCount)
+		instantiateMsg, err := instantiateTickerContract(uint64(tickerCodeId), "test ticker", val.keyInfo.GetAddress(), StartCount)
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)
@@ -138,25 +219,43 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().NotNil(event)
 		attr = event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
-		contractAddress := attr.Value
-		contract, err := types.AccAddressFromBech32(contractAddress)
+		tickerContractInstance, err := types.AccAddressFromBech32(attr.Value)
 		s.Require().NoError(err)
-		s.T().Logf("ticker contract instantiated at address: %s", contract.String())
+		s.T().Logf("ticker contract instantiated at address: %s", tickerContractInstance.String())
 
-		// baseline tests to make sure the contract behaves as expected
-		s.T().Log("Querying contract for count")
-		count, err := queryCount(clientCtx, contract.String())
+		s.T().Log("Instantiating proxy contract...")
+		instantiateMsg, err = instantiateProxyContract(uint64(proxyCodeId), "test proxy", val.keyInfo.GetAddress())
+		s.Require().NoError(err)
+		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
+		s.Require().NoError(err)
+		s.Require().Zero(res.Code)
+		event = res.Logs[0].Events[0]
+		s.Require().NotNil(event)
+		attr = event.Attributes[0]
+		s.Require().Equal("_contract_address", attr.Key)
+		proxyContractInstance, err := types.AccAddressFromBech32(attr.Value)
+		s.Require().NoError(err)
+		s.T().Logf("proxy contract instantiated at address: %s", proxyContractInstance.String())
+
+		// baseline tests to make sure the contracts behave as expected
+		s.T().Log("Querying ticker contract for count")
+		count, err := queryTickerCount(clientCtx, tickerContractInstance.String())
 		s.Require().NoError(err)
 		s.Require().Equal(StartCount, count)
 
-		incrementMsg, err := incrementMsg(contract.String(), val.keyInfo.GetAddress())
+		s.T().Log("Querying proxy contract for owner")
+		isOwner, err := queryIsProxyOwner(clientCtx, proxyContractInstance.String(), val.keyInfo.GetAddress())
+		s.Require().NoError(err)
+		s.Require().True(isOwner, "owner returned as false")
+
+		incrementMsg, err := tickerIncrementMsg(tickerContractInstance.String(), val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &incrementMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
 		CurrentCount += 1
 
-		count, err = queryCount(clientCtx, contract.String())
+		count, err = queryTickerCount(clientCtx, tickerContractInstance.String())
 		s.Require().NoError(err)
 		s.Require().Equal(CurrentCount, count)
 
@@ -165,12 +264,16 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().NoError(err)
 		s.T().Logf("current block height %d", blockHeight)
 
+		// create the passthrough message
+		proxyIncrementMsg, err := makeProxyIncrementMsg(tickerContractInstance)
+		s.Require().NoError(err)
+
 		// schedule the call
 		scheduledBlockHeight := blockHeight + 10
 		scheduleMsg := scheduletypes.MsgAddSchedule{
 			Signer:      val.keyInfo.GetAddress().String(),
-			Contract:    contract.String(),
-			CallBody:    []byte("replace this with proxy call"),
+			Contract:    proxyContractInstance.String(),
+			CallBody:    proxyIncrementMsg,
 			BlockHeight: scheduledBlockHeight,
 		}
 		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
@@ -184,7 +287,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			calls, err := queryScheduledCalls(clientCtx)
 			s.Require().NoError(err)
 			for _, call := range calls {
-				if call.Contract == contract.String() && call.Height == scheduledBlockHeight {
+				if call.Contract == tickerContractInstance.String() && call.Height == scheduledBlockHeight {
 					return true
 				}
 			}
@@ -197,11 +300,11 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			blockHeight, err = currentBlockHeight(clientCtx)
 			s.Require().NoError(err)
 			if blockHeight < scheduledBlockHeight {
-				count, err = queryCount(clientCtx, contract.String())
+				count, err = queryTickerCount(clientCtx, tickerContractInstance.String())
 				s.Require().NoError(err)
 				s.Require().Equal(CurrentCount, count, "count was updated before schedule")
 			} else if blockHeight > scheduledBlockHeight {
-				count, err = queryCount(clientCtx, contract.String())
+				count, err = queryTickerCount(clientCtx, tickerContractInstance.String())
 				s.Require().NoError(err)
 				s.Require().Equal(CurrentCount+1, count, "count was not updated after schedule")
 				return true
