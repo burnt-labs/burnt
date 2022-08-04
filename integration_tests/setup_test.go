@@ -333,6 +333,7 @@ func (s *IntegrationTestSuite) runValidators() {
 			runOpts.ExposedPorts = []string{"1317/tcp", "9090/tcp", "26656/tcp", "26657/tcp"}
 		}
 
+		s.T().Logf("running with options %v", runOpts)
 		resource, err := s.dockerPool.RunWithOptions(runOpts, noRestart)
 		s.Require().NoError(err)
 
