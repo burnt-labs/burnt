@@ -71,7 +71,7 @@ func queryIsProxyOwner(ctx *client.Context, addr string, owner types.AccAddress)
 
 	queryData, err := json.Marshal(map[string]interface{}{
 		"is_owner": map[string]interface{}{
-			"owner": owner,
+			"address": owner,
 		},
 	})
 	if err != nil {
@@ -246,7 +246,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.T().Log("Querying proxy contract for owner")
 		isOwner, err := queryIsProxyOwner(clientCtx, proxyContractInstance.String(), val.keyInfo.GetAddress())
 		s.Require().NoError(err)
-		s.Require().True(isOwner, "owner returned as false")
+		s.Require().True(isOwner, "is_owner returned as false")
 
 		incrementMsg, err := tickerIncrementMsg(tickerContractInstance.String(), val.keyInfo.GetAddress())
 		s.Require().NoError(err)
@@ -287,9 +287,14 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			calls, err := queryScheduledCalls(clientCtx)
 			s.Require().NoError(err)
 			for _, call := range calls {
-				if call.Contract == tickerContractInstance.String() && call.Height == scheduledBlockHeight {
-					return true
+				if call.Contract != proxyContractInstance.String() {
+					s.T().Logf("found contract %s, expected %s", call.Contract, proxyContractInstance.String())
+					continue
+				} else if call.Height != scheduledBlockHeight {
+					s.T().Logf("found call height %d, expected %d", call.Height, scheduledBlockHeight)
+					continue
 				}
+				return true
 			}
 			s.T().Logf("queried scheduled calls at block %d, got %v", height, calls)
 			return false
