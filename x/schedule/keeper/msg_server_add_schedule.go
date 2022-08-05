@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"github.com/BurntFinance/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"strconv"
 )
+
+type isOwnerResponse struct {
+	IsOwner bool `json:"is_owner"`
+}
 
 func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule) (*types.MsgAddScheduleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -26,29 +29,31 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 	}
 
 	ownerQueryMsg, err := json.Marshal(map[string]interface{}{
-		"is_owner": signer.Bytes(),
+		"is_owner": map[string]interface{}{
+			"address": signer,
+		},
 	})
 	ownerQueryRes, err := k.wasmViewKeeper.QuerySmart(ctx, contract, ownerQueryMsg)
 	if err != nil {
 		return nil, err
 	}
 
-	isOwner, err := strconv.ParseBool(string(ownerQueryRes))
+	var isOwner isOwnerResponse
+	err = json.Unmarshal(ownerQueryRes, &isOwner)
 	if err != nil {
 		return nil, err
 	}
-	if !isOwner {
+	if !isOwner.IsOwner {
 		return nil, types.ErrUnauthorized
 	}
 
 	// todo: anti spam protection. how do we keep this from getting blown up for free?
 	// probably we just charge gas for this
 
-	gasDenom := k.GetParams(ctx).GasDenom
-	balanceMinimum := k.GetParams(ctx).ScheduledBalanceMinimum
-	balance := k.bankKeeper.GetBalance(ctx, contract, gasDenom)
+	gasMinimum := k.GetParams(ctx).MinimumBalance
+	balance := k.bankKeeper.GetBalance(ctx, contract, gasMinimum.Denom)
 
-	if balance.Amount.LT(sdk.NewIntFromUint64(balanceMinimum)) {
+	if balance.Amount.LT(gasMinimum.Amount) {
 		// the contract doesn't have the funds
 		return nil, types.ErrUnmetMinimumBalance
 	}

@@ -6,12 +6,13 @@ import (
 	scheduletypes "github.com/BurntFinance/burnt/x/schedule/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"strconv"
 	"time"
 )
 
-func instantiateTickerContract(codeId uint64, label string, sender types.AccAddress, count int32) (wasmtypes.MsgInstantiateContract, error) {
+func instantiateTickerContract(codeId uint64, label string, sender sdktypes.AccAddress, count int32) (wasmtypes.MsgInstantiateContract, error) {
 	msg, err := json.Marshal(map[string]interface{}{
 		"count": count,
 	})
@@ -28,7 +29,7 @@ func instantiateTickerContract(codeId uint64, label string, sender types.AccAddr
 	}, nil
 }
 
-func instantiateProxyContract(codeId uint64, label string, sender types.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
+func instantiateProxyContract(codeId uint64, label string, sender sdktypes.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
 	msg, err := json.Marshal(map[string]interface{}{})
 	if err != nil {
 		return wasmtypes.MsgInstantiateContract{}, err
@@ -43,7 +44,7 @@ func instantiateProxyContract(codeId uint64, label string, sender types.AccAddre
 	}, nil
 }
 
-func tickerIncrementMsg(contract string, sender types.AccAddress) (wasmtypes.MsgExecuteContract, error) {
+func tickerIncrementMsg(contract string, sender sdktypes.AccAddress) (wasmtypes.MsgExecuteContract, error) {
 	msg, err := json.Marshal(map[string]interface{}{
 		"increment": map[string]interface{}{},
 	})
@@ -66,7 +67,7 @@ type ProxyIsOwnerResponse struct {
 	IsOwner bool `json:"is_owner"`
 }
 
-func queryIsProxyOwner(ctx *client.Context, addr string, owner types.AccAddress) (bool, error) {
+func queryIsProxyOwner(ctx *client.Context, addr string, owner sdktypes.AccAddress) (bool, error) {
 	queryClient := wasmtypes.NewQueryClient(ctx)
 
 	queryData, err := json.Marshal(map[string]interface{}{
@@ -142,7 +143,7 @@ func queryScheduledCalls(clientCtx *client.Context) ([]*scheduletypes.QuerySched
 	return res.Calls, nil
 }
 
-func makeProxyIncrementMsg(address types.AccAddress) ([]byte, error) {
+func makeProxyIncrementMsg(address sdktypes.AccAddress) ([]byte, error) {
 	incrementMsg, err := json.Marshal(map[string]interface{}{
 		"increment": map[string]interface{}{},
 	})
@@ -219,7 +220,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().NotNil(event)
 		attr = event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
-		tickerContractInstance, err := types.AccAddressFromBech32(attr.Value)
+		tickerContractInstance, err := sdktypes.AccAddressFromBech32(attr.Value)
 		s.Require().NoError(err)
 		s.T().Logf("ticker contract instantiated at address: %s", tickerContractInstance.String())
 
@@ -233,7 +234,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().NotNil(event)
 		attr = event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
-		proxyContractInstance, err := types.AccAddressFromBech32(attr.Value)
+		proxyContractInstance, err := sdktypes.AccAddressFromBech32(attr.Value)
 		s.Require().NoError(err)
 		s.T().Logf("proxy contract instantiated at address: %s", proxyContractInstance.String())
 
@@ -247,6 +248,12 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		isOwner, err := queryIsProxyOwner(clientCtx, proxyContractInstance.String(), val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		s.Require().True(isOwner, "is_owner returned as false")
+
+		// checking params
+		scheduleQC := scheduletypes.NewQueryClient(clientCtx)
+		params, err := scheduleQC.Params(context.Background(), &scheduletypes.QueryParamsRequest{})
+		s.Require().NoError(err)
+		s.T().Logf("params: %v", params)
 
 		incrementMsg, err := tickerIncrementMsg(tickerContractInstance.String(), val.keyInfo.GetAddress())
 		s.Require().NoError(err)
@@ -268,7 +275,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		proxyIncrementMsg, err := makeProxyIncrementMsg(tickerContractInstance)
 		s.Require().NoError(err)
 
-		// schedule the call
+		// schedule the call, expect error because contract has no balance
 		scheduledBlockHeight := blockHeight + 10
 		scheduleMsg := scheduletypes.MsgAddSchedule{
 			Signer:      val.keyInfo.GetAddress().String(),
@@ -277,8 +284,23 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			BlockHeight: scheduledBlockHeight,
 		}
 		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
+		s.Require().Error(err)
+		s.T().Logf("failed to schedule call for height %d with %v", scheduledBlockHeight, scheduleMsg.Contract)
+
+		s.T().Logf("transfering balance to contract")
+		transferCoinMsg := banktypes.NewMsgSend(
+			s.chain.validators[0].keyInfo.GetAddress(),
+			proxyContractInstance,
+			sdktypes.Coins{{Denom: testDenom, Amount: sdktypes.NewInt(50000)}})
+
+		res, err = s.chain.sendMsgs(*clientCtx, transferCoinMsg)
 		s.Require().NoError(err)
-		s.T().Logf("scheduled call for height %d with %v", scheduledBlockHeight, scheduleMsg)
+		s.Require().Zero(res.Code)
+
+		// schedule the call, succeed
+		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
+		s.Require().NoError(err)
+		s.T().Logf("scheduled call for height %d on contract %v", scheduledBlockHeight, scheduleMsg.Contract)
 
 		// verify the call was scheduled
 		s.Require().Eventuallyf(func() bool {
@@ -316,7 +338,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 			}
 
 			return false
-		}, time.Minute*1, time.Second*3, "never found an incremented count after the scheduled height")
+		}, time.Minute*1, time.Second, "never found an incremented count after the scheduled height")
 
 		// todo: same test, but when the call returns a reschedule. validate it
 		// updated, that the new height was recorded, and eventually consumed

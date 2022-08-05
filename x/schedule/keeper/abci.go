@@ -29,25 +29,49 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			return false
 		}
 
-		contractBalance := k.bankKeeper.GetBalance(ctx, contract, params.GasDenom)
+		contractBalance := k.bankKeeper.GetBalance(ctx, contract, params.MinimumBalance.Denom)
+		if contractBalance.IsLT(params.MinimumBalance) {
+			k.Logger(ctx).Info("contract did not maintain the minimum balance, skipping it",
+				"contract", contract,
+				"balance", contractBalance,
+				"minimum", params.MinimumBalance)
+			return false
+		}
+
 		contractGasMeter := sdk.NewGasMeter(contractBalance.Amount.Uint64())
 		gasCtx := ctx.WithGasMeter(contractGasMeter)
 		result, err := k.wasmPermissionedKeeper.Execute(gasCtx, contract, contract, call.CallBody, nil)
 
-		// always charge the contract for the gas
 		gasConsumed := gasCtx.GasMeter().GasConsumed()
-		gasCoins := sdk.Coins{{
-			Denom:  params.GasDenom,
+		gasCoin := sdk.Coin{
+			Denom:  params.MinimumBalance.Denom,
 			Amount: sdk.NewIntFromUint64(gasConsumed),
-		}}
-		if sendErr := k.bankKeeper.SendCoins(gasCtx, contract, feeReceiver, gasCoins); err != nil {
-			k.Logger(ctx).Error("error sending gas from contract to receiver",
-				"contract", contract,
-				"receiver", feeReceiver,
-				"call", call.CallBody,
-				"error", sendErr)
 		}
 
+		// always charge the contract for the gas, either its gas used or total remaining balance, whichever is less
+		if gasCoin.IsLT(contractBalance) {
+			if sendErr := k.bankKeeper.SendCoins(gasCtx, contract, feeReceiver, sdk.Coins{gasCoin}); err != nil {
+				k.Logger(ctx).Error("error sending gas from contract to receiver",
+					"contract", contract,
+					"receiver", feeReceiver,
+					"call", call.CallBody,
+					"error", sendErr)
+			}
+		} else {
+			k.Logger(ctx).Info("contract did not have a balance to pay for used gas, collecting all",
+				"contract", contract,
+				"gas used", gasCoin,
+				"contract balance", contractBalance)
+			if sendErr := k.bankKeeper.SendCoins(gasCtx, contract, feeReceiver, sdk.Coins{contractBalance}); err != nil {
+				k.Logger(ctx).Error("error sending gas from contract to receiver",
+					"contract", contract,
+					"receiver", feeReceiver,
+					"call", call.CallBody,
+					"error", sendErr)
+			}
+		}
+
+		// continue checking if call errored
 		if err != nil {
 			k.Logger(ctx).Error("error executing scheduled wasm call",
 				"block height", ctx.BlockHeight(),
@@ -65,30 +89,27 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 				"contract", contract,
 				"signer", signer,
 			)
+			return false
 		}
 		nextBlock := sdk.BigEndianToUint64(result)
 
-		// Deduct fees
-		// We pass msgs = nil because we are generating this transaction
-		//gasConsumed := gasCtx.GasMeter().GasConsumed()
-		//gasCoins := sdk.Coins{{
-		//	Denom:  gasDenom,
-		//	Amount: sdk.NewIntFromUint64(gasConsumed),
-		//}}
-
-		//if err := k.feegrantKeeper.UseGrantedFees(ctx, payer, signer, gasCoins, nil); err != nil {
-		//	k.Logger(ctx).Error("error using granted fees",
-		//		"error", err,
-		//		"payer", payer,
-		//		"signer", signer,
-		//		"gas coins", gasCoins,
-		//	)
-		//	return false
-		//}
+		// check to make sure contract still has minimum balance
+		contractBalance = k.bankKeeper.GetBalance(ctx, contract, params.MinimumBalance.Denom)
+		if contractBalance.IsLT(params.MinimumBalance) {
+			k.Logger(ctx).Info("contract no longer has the minimum balance, not scheduling it's following scheduled call",
+				"contract", contract,
+				"balance", contractBalance,
+				"minimum", params.MinimumBalance)
+			return false
+		}
 
 		// Schedule the next execution
 		if nextBlock <= uint64(ctx.BlockHeight()) {
-			return true
+			k.Logger(ctx).Info("contract is trying to schedule a call in the past, skipping it",
+				"contract", contract,
+				"next block", nextBlock,
+				"current block", ctx.BlockHeight())
+			return false
 		}
 		k.AddScheduledCall(ctx, signer, contract, call.CallBody, nextBlock)
 

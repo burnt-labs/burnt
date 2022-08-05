@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	scheduletypes "github.com/BurntFinance/burnt/x/schedule/types"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -236,6 +237,14 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(err)
 	appGenState[genutiltypes.ModuleName] = bz
 
+	var scheduleGenState scheduletypes.GenesisState
+	s.Require().NoError(cdc.UnmarshalJSON(appGenState[scheduletypes.ModuleName], &scheduleGenState))
+	scheduleGenState.Params.MinimumBalance = sdk.NewCoin(testDenom, sdk.NewInt(5000))
+	scheduleGenState.Params.FeeReceiver = s.chain.validators[0].keyInfo.GetAddress()
+	bz, err = cdc.MarshalJSON(&scheduleGenState)
+	s.Require().NoError(err)
+	appGenState[scheduletypes.ModuleName] = bz
+
 	// serialize genesis state
 	bz, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
@@ -333,7 +342,6 @@ func (s *IntegrationTestSuite) runValidators() {
 			runOpts.ExposedPorts = []string{"1317/tcp", "9090/tcp", "26656/tcp", "26657/tcp"}
 		}
 
-		s.T().Logf("running with options %v", runOpts)
 		resource, err := s.dockerPool.RunWithOptions(runOpts, noRestart)
 		s.Require().NoError(err)
 

@@ -2,6 +2,7 @@ syntax = "proto3";
 package schedule.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
 
@@ -9,7 +10,6 @@ option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
 message Params {
   option (gogoproto.goproto_stringer) = false;
 
-  string gas_denom = 1;
-  uint64 scheduled_balance_minimum = 2;
-  bytes fee_receiver = 3;
+  cosmos.base.v1beta1.Coin minimum_balance = 1 [ (gogoproto.nullable) = false ];
+  bytes fee_receiver = 2;
 }

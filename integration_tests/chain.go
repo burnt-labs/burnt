@@ -249,5 +249,10 @@ func (c *chain) sendMsgs(clientCtx client.Context, msgs ...sdk.Msg) (*sdk.TxResp
 		return nil, err
 	}
 
+	if res.Code != 0 {
+		return nil, fmt.Errorf("error processing msg. code: %d logs: %s", res.Code, res.RawLog)
+
+	}
+
 	return res, nil
 }
