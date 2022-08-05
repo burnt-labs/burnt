@@ -5,27 +5,45 @@ import (
 	"github.com/BurntFinance/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
-	"strconv"
 )
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
+	callCount := k.countOfScheduledCallsAtHeight(ctx, uint64(ctx.BlockHeight()))
+	k.Logger(ctx).Info("iterating scheduled calls",
+		"height", ctx.BlockHeight(),
+		"count", callCount)
+
 	params := k.GetParams(ctx)
 	feeReceiver := sdk.AccAddress(params.FeeReceiver)
 	k.ConsumeScheduledCallsByHeight(ctx, uint64(ctx.BlockHeight()), func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool) {
+		k.Logger(ctx).Info("consuming scheduled call",
+			"signer", signer,
+			"contract", contract,
+			"call", call)
 
 		// verify the signer is still the owner
 		ownerQueryMsg, err := json.Marshal(map[string]interface{}{
-			"is_owner": signer.Bytes(),
+			"is_owner": map[string]interface{}{
+				"address": signer,
+			},
 		})
 		ownerQueryRes, err := k.wasmViewKeeper.QuerySmart(ctx, contract, ownerQueryMsg)
 		if err != nil {
+			k.Logger(ctx).Error("error querying smart contract for owner",
+				"error", err)
 			return false
 		}
-		isOwner, err := strconv.ParseBool(string(ownerQueryRes))
+		var isOwner isOwnerResponse
+		err = json.Unmarshal(ownerQueryRes, &isOwner)
 		if err != nil {
+			k.Logger(ctx).Error("error parsing owner response from contract",
+				"error", err)
 			return false
 		}
-		if !isOwner {
+		if !isOwner.IsOwner {
+			k.Logger(ctx).Info("contract is no longer owned by signer",
+				"contract", contract,
+				"signer", signer)
 			return false
 		}
 
@@ -41,6 +59,10 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 		contractGasMeter := sdk.NewGasMeter(contractBalance.Amount.Uint64())
 		gasCtx := ctx.WithGasMeter(contractGasMeter)
 		result, err := k.wasmPermissionedKeeper.Execute(gasCtx, contract, contract, call.CallBody, nil)
+		if err != nil {
+			k.Logger(ctx).
+		}
+		// error gets checked after consuming gas
 
 		gasConsumed := gasCtx.GasMeter().GasConsumed()
 		gasCoin := sdk.Coin{

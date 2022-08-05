@@ -127,3 +127,15 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 		}
 	}
 }
+
+func (k Keeper) countOfScheduledCallsAtHeight(ctx sdk.Context, blockHeight uint64) (count uint64) {
+	prefixKey := types.MakeScheduledCallByBlockHeightPrefixKey(blockHeight)
+	prefixStore := prefix.NewStore(ctx.KVStore(k.storeKey), prefixKey)
+	iter := prefixStore.Iterator(nil, nil)
+	defer iter.Close()
+	count = 0
+	for ; iter.Valid(); iter.Next() {
+		count += 1
+	}
+	return
+}

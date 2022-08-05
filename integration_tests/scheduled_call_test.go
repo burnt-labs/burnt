@@ -298,6 +298,10 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().Zero(res.Code)
 
 		// schedule the call, succeed
+		blockHeight, err = currentBlockHeight(clientCtx)
+		s.Require().NoError(err)
+		scheduledBlockHeight = blockHeight + 10
+		scheduleMsg.BlockHeight = scheduledBlockHeight
 		res, err = s.chain.sendMsgs(*clientCtx, &scheduleMsg)
 		s.Require().NoError(err)
 		s.T().Logf("scheduled call for height %d on contract %v", scheduledBlockHeight, scheduleMsg.Contract)
@@ -326,6 +330,9 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.Require().Eventuallyf(func() bool {
 			blockHeight, err = currentBlockHeight(clientCtx)
 			s.Require().NoError(err)
+			calls, err := queryScheduledCalls(clientCtx)
+			s.Require().NoError(err)
+			s.T().Logf("height: %d, calls: %v", blockHeight, calls)
 			if blockHeight < scheduledBlockHeight {
 				count, err = queryTickerCount(clientCtx, tickerContractInstance.String())
 				s.Require().NoError(err)
