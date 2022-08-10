@@ -291,7 +291,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		transferCoinMsg := banktypes.NewMsgSend(
 			s.chain.validators[0].keyInfo.GetAddress(),
 			proxyContractInstance,
-			sdktypes.Coins{{Denom: testDenom, Amount: sdktypes.NewInt(50000)}})
+			sdktypes.Coins{{Denom: testDenom, Amount: sdktypes.NewInt(1000000)}})
 
 		res, err = s.chain.sendMsgs(*clientCtx, transferCoinMsg)
 		s.Require().NoError(err)

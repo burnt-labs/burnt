@@ -4,8 +4,41 @@ import (
 	"encoding/json"
 	"github.com/BurntFinance/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 )
+
+func (k Keeper) executeMsgWithGasLimit(ctx sdk.Context, contract sdk.AccAddress, msg []byte, gasLimit uint64) (gasConsumed uint64, nextBlock uint64, err error) {
+	contractGasMeter := sdk.NewGasMeter(gasLimit)
+	gasCtx := ctx.WithGasMeter(contractGasMeter)
+
+	// catch out of gas panic and just charge the entire gas limit
+	defer func() {
+		if r := recover(); r != nil {
+			// if it's not an OutOfGas error, raise it again
+			if _, ok := r.(sdk.ErrorOutOfGas); !ok {
+				// log it to get the original stack trace somewhere (as panic(r) keeps message but stacktrace to here
+				k.Logger(ctx).Error("scheduled call throwing panic",
+					"error", r)
+				panic(r)
+			}
+			//ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
+			k.Logger(ctx).Info("scheduled call hit gas limit",
+				"gas consumed", gasCtx.GasMeter().GasConsumed(),
+				"gas limit", gasLimit,
+				"contract", contract)
+			err = sdkerrors.Wrap(sdkerrors.ErrOutOfGas, "scheduled call hit gas limit")
+			gasConsumed = gasLimit
+			nextBlock = 0
+		}
+	}()
+
+	result, err := k.wasmPermissionedKeeper.Execute(gasCtx, contract, contract, msg, nil)
+	nextBlock = sdk.BigEndianToUint64(result)
+	gasConsumed = gasCtx.GasMeter().GasConsumed()
+
+	return
+}
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
 	callCount := k.countOfScheduledCallsAtHeight(ctx, uint64(ctx.BlockHeight()))
@@ -56,41 +89,21 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			return false
 		}
 
-		contractGasMeter := sdk.NewGasMeter(contractBalance.Amount.Uint64())
-		gasCtx := ctx.WithGasMeter(contractGasMeter)
-		result, err := k.wasmPermissionedKeeper.Execute(gasCtx, contract, contract, call.CallBody, nil)
-		if err != nil {
-			k.Logger(ctx).
-		}
+		gasConsumed, nextBlock, err := k.executeMsgWithGasLimit(ctx, contract, call.CallBody, contractBalance.Amount.Uint64())
 		// error gets checked after consuming gas
 
-		gasConsumed := gasCtx.GasMeter().GasConsumed()
 		gasCoin := sdk.Coin{
 			Denom:  params.MinimumBalance.Denom,
 			Amount: sdk.NewIntFromUint64(gasConsumed),
 		}
 
-		// always charge the contract for the gas, either its gas used or total remaining balance, whichever is less
-		if gasCoin.IsLT(contractBalance) {
-			if sendErr := k.bankKeeper.SendCoins(gasCtx, contract, feeReceiver, sdk.Coins{gasCoin}); err != nil {
-				k.Logger(ctx).Error("error sending gas from contract to receiver",
-					"contract", contract,
-					"receiver", feeReceiver,
-					"call", call.CallBody,
-					"error", sendErr)
-			}
-		} else {
-			k.Logger(ctx).Info("contract did not have a balance to pay for used gas, collecting all",
+		if sendErr := k.bankKeeper.SendCoins(ctx, contract, feeReceiver, sdk.Coins{gasCoin}); sendErr != nil {
+			k.Logger(ctx).Error("error sending gas from contract to receiver",
 				"contract", contract,
-				"gas used", gasCoin,
-				"contract balance", contractBalance)
-			if sendErr := k.bankKeeper.SendCoins(gasCtx, contract, feeReceiver, sdk.Coins{contractBalance}); err != nil {
-				k.Logger(ctx).Error("error sending gas from contract to receiver",
-					"contract", contract,
-					"receiver", feeReceiver,
-					"call", call.CallBody,
-					"error", sendErr)
-			}
+				"gas consumed", gasConsumed,
+				"receiver", feeReceiver,
+				"call", call.CallBody,
+				"error", sendErr)
 		}
 
 		// continue checking if call errored
@@ -104,16 +117,6 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			)
 			return false
 		}
-		if len(result) != 8 {
-			k.Logger(ctx).Info("invalid response from contract",
-				"result", result,
-				"msg", call.CallBody,
-				"contract", contract,
-				"signer", signer,
-			)
-			return false
-		}
-		nextBlock := sdk.BigEndianToUint64(result)
 
 		// check to make sure contract still has minimum balance
 		contractBalance = k.bankKeeper.GetBalance(ctx, contract, params.MinimumBalance.Denom)
