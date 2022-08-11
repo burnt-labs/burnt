@@ -23,7 +23,7 @@ func (k Keeper) executeMsgWithGasLimit(ctx sdk.Context, contract sdk.AccAddress,
 				panic(r)
 			}
 			//ctx.GasMeter().ConsumeGas(gasLimit, "Sub-Message OutOfGas panic")
-			k.Logger(ctx).Info("scheduled call hit gas limit",
+			k.Logger(ctx).Debug("scheduled call hit gas limit",
 				"gas consumed", gasCtx.GasMeter().GasConsumed(),
 				"gas limit", gasLimit,
 				"contract", contract)
@@ -41,15 +41,10 @@ func (k Keeper) executeMsgWithGasLimit(ctx sdk.Context, contract sdk.AccAddress,
 }
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
-	callCount := k.countOfScheduledCallsAtHeight(ctx, uint64(ctx.BlockHeight()))
-	k.Logger(ctx).Info("iterating scheduled calls",
-		"height", ctx.BlockHeight(),
-		"count", callCount)
-
 	params := k.GetParams(ctx)
 	feeReceiver := sdk.AccAddress(params.FeeReceiver)
 	k.ConsumeScheduledCallsByHeight(ctx, uint64(ctx.BlockHeight()), func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool) {
-		k.Logger(ctx).Info("consuming scheduled call",
+		k.Logger(ctx).Debug("consuming scheduled call",
 			"signer", signer,
 			"contract", contract,
 			"call", call)
@@ -74,7 +69,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			return false
 		}
 		if !isOwner.IsOwner {
-			k.Logger(ctx).Info("contract is no longer owned by signer",
+			k.Logger(ctx).Debug("contract is no longer owned by signer",
 				"contract", contract,
 				"signer", signer)
 			return false
@@ -82,7 +77,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 		contractBalance := k.bankKeeper.GetBalance(ctx, contract, params.MinimumBalance.Denom)
 		if contractBalance.IsLT(params.MinimumBalance) {
-			k.Logger(ctx).Info("contract did not maintain the minimum balance, skipping it",
+			k.Logger(ctx).Debug("contract did not maintain the minimum balance, skipping it",
 				"contract", contract,
 				"balance", contractBalance,
 				"minimum", params.MinimumBalance)
@@ -121,7 +116,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 		// check to make sure contract still has minimum balance
 		contractBalance = k.bankKeeper.GetBalance(ctx, contract, params.MinimumBalance.Denom)
 		if contractBalance.IsLT(params.MinimumBalance) {
-			k.Logger(ctx).Info("contract no longer has the minimum balance, not scheduling it's following scheduled call",
+			k.Logger(ctx).Debug("contract no longer has the minimum balance, will not schedule it's following scheduled call",
 				"contract", contract,
 				"balance", contractBalance,
 				"minimum", params.MinimumBalance)
@@ -130,7 +125,7 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 
 		// Schedule the next execution
 		if nextBlock <= uint64(ctx.BlockHeight()) {
-			k.Logger(ctx).Info("contract is trying to schedule a call in the past, skipping it",
+			k.Logger(ctx).Debug("contract is trying to schedule a call in the past, skipping it",
 				"contract", contract,
 				"next block", nextBlock,
 				"current block", ctx.BlockHeight())

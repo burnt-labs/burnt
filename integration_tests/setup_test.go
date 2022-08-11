@@ -276,7 +276,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", val.instanceName(), 26656)
 		valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 		valConfig.StateSync.Enable = false
-		valConfig.LogLevel = "info"
+		valConfig.LogLevel = "debug"
 
 		// speed up blocks
 		valConfig.Consensus.TimeoutCommit = 1 * time.Second
