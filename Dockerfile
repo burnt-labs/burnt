@@ -48,8 +48,9 @@ CMD ["/usr/bin/burntd", "start"]
 
 FROM burnt-release
 
-RUN burntd init --chain-id burnt-local-testnet fogo
-COPY ./docker/local-config /root/.burnt/config
+COPY ./docker/local-config /burnt/config
+COPY ./docker/entrypoint.sh /root/entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
 
 # rest server
 EXPOSE 1317
@@ -58,4 +59,6 @@ EXPOSE 26656
 # tendermint rpc
 EXPOSE 26657
 
-CMD ["/usr/bin/burntd", "start"]
+VOLUME [ "/burnt/data" ]
+
+CMD ["/root/entrypoint.sh"]
