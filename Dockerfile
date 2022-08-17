@@ -51,4 +51,11 @@ FROM burnt-release
 RUN burntd init --chain-id burnt-local-testnet fogo
 COPY ./docker/local-config /root/.burnt/config
 
+# rest server
+EXPOSE 1317
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
+
 CMD ["/usr/bin/burntd", "start"]
