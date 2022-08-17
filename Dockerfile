@@ -31,7 +31,7 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/burntd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.16
+FROM alpine:3.16 AS burnt-release
 
 COPY --from=go-builder /code/build/burntd /usr/bin/burntd
 
@@ -43,5 +43,12 @@ EXPOSE 1317
 EXPOSE 26656
 # tendermint rpc
 EXPOSE 26657
+
+CMD ["/usr/bin/burntd", "start"]
+
+FROM burnt-release
+
+RUN burntd init --chain-id burnt-local-testnet fogo
+COPY ./docker/local-config /root/.burnt/config
 
 CMD ["/usr/bin/burntd", "start"]
