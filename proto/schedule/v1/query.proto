@@ -32,16 +32,13 @@ message QueryParamsResponse {
 
 // this line is used by starport scaffolding # 3
 
-message QueryScheduledCallsRequest{
-  string contract = 1;
-}
+message QueryScheduledCallsRequest{}
 
 message QueryScheduledCall {
   string contract = 1;
-  string function_name = 2;
-  bytes payer = 3;
-  uint64 height = 4;
-  bytes signer = 5;
+  bytes call_body = 2;
+  uint64 height = 3;
+  bytes signer = 4;
 }
 
 message QueryScheduledCallsResponse{

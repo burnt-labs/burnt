@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	scheduletypes "github.com/BurntFinance/burnt/x/schedule/types"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -236,6 +237,14 @@ func (s *IntegrationTestSuite) initGenesis() {
 	s.Require().NoError(err)
 	appGenState[genutiltypes.ModuleName] = bz
 
+	var scheduleGenState scheduletypes.GenesisState
+	s.Require().NoError(cdc.UnmarshalJSON(appGenState[scheduletypes.ModuleName], &scheduleGenState))
+	scheduleGenState.Params.MinimumBalance = sdk.NewCoin(testDenom, sdk.NewInt(1000000))
+	scheduleGenState.Params.FeeReceiver = s.chain.validators[0].keyInfo.GetAddress()
+	bz, err = cdc.MarshalJSON(&scheduleGenState)
+	s.Require().NoError(err)
+	appGenState[scheduletypes.ModuleName] = bz
+
 	// serialize genesis state
 	bz, err = json.MarshalIndent(appGenState, "", "  ")
 	s.Require().NoError(err)
@@ -267,7 +276,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", val.instanceName(), 26656)
 		valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 		valConfig.StateSync.Enable = false
-		valConfig.LogLevel = "info"
+		valConfig.LogLevel = "debug"
 
 		// speed up blocks
 		valConfig.Consensus.TimeoutCommit = 1 * time.Second

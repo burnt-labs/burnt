@@ -47,10 +47,10 @@ func MakeScheduledCallByBlockHeightPrefixKey(blockHeight uint64) []byte {
 	return bytes.Join([][]byte{{ScheduledCallByBlockHeightKeyPrefix}, sdk.Uint64ToBigEndian(blockHeight)}, []byte{})
 }
 
-func MakeScheduledCallByBlockHeightKey(blockHeight uint64, signer sdk.AccAddress, contract sdk.AccAddress, functionName string) []byte {
-	return bytes.Join([][]byte{MakeScheduledCallByBlockHeightPrefixKey(blockHeight), signer.Bytes(), contract.Bytes(), stringToHash(functionName)}, []byte{})
+func MakeScheduledCallByBlockHeightKey(blockHeight uint64, signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte) []byte {
+	return bytes.Join([][]byte{MakeScheduledCallByBlockHeightPrefixKey(blockHeight), signer.Bytes(), contract.Bytes(), callBody}, []byte{})
 }
 
-func MakeScheduledCallByNameKey(signer sdk.AccAddress, contract sdk.AccAddress, functionName string) []byte {
-	return bytes.Join([][]byte{{ScheduledCallByNameKeyPrefix}, signer.Bytes(), contract.Bytes(), stringToHash(functionName)}, []byte{})
+func MakeScheduledCallByNameKey(signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte) []byte {
+	return bytes.Join([][]byte{{ScheduledCallByNameKeyPrefix}, signer.Bytes(), contract.Bytes(), callBody}, []byte{})
 }

@@ -3,24 +3,26 @@ package schedule.v1;
 
 // this line is used by starport scaffolding # proto/tx/import
 import "third_party/cosmos_proto/cosmos.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
 
 // Msg defines the Msg service.
 service Msg {
-      rpc AddSchedule(MsgAddSchedule) returns (MsgAddScheduleResponse);
+      rpc AddSchedule(MsgAddSchedule) returns (MsgAddScheduleResponse) {
+        option (google.api.http).post = "/BurntFinance/burnt/schedule/add_schedule";
+      };
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgAddSchedule {
   string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   string contract = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string functionName = 3;
-  string payer = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  bytes call_body = 3;
   uint64 block_height = 5;
 }
 
 message MsgAddScheduleResponse {
 }
 
-// this line is used by starport scaffolding # proto/tx/message
+// this line is used by starport scaffolding # proto/tx/message1
