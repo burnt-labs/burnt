@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	wasmutils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
+	wasmutils "github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/types"
 )
