@@ -120,6 +120,7 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		event := events[len(events)-1]
 		attrsLen := len(event.Attributes)
 		attr := event.Attributes[attrsLen-1]
+		s.T().Logf("attributes: %v", event)
 		s.Require().Equal("code_id", attr.Key)
 
 		codeIdStr := attr.Value
