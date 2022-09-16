@@ -118,7 +118,6 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 
 		events := res.Logs[0].Events
 		event := events[len(events)-1]
-		attr := event.Attributes[0]
 		codeID := 0
 		for _, attr := range event.Attributes {
 			if attr.Key == "code_id" {
@@ -139,7 +138,7 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 		s.Require().Zero(res.Code)
 		event = res.Logs[0].Events[0]
 		s.Require().NotNil(event)
-		attr = event.Attributes[0]
+		attr := event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
 		contractAddress := attr.Value
 		s.T().Logf("NFT token contract instantiated at address: %s", contractAddress)

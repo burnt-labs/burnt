@@ -186,13 +186,16 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 
 		events := res.Logs[0].Events
 		event := events[len(events)-1]
-		attrsLen := len(event.Attributes)
-		attr := event.Attributes[attrsLen-1]
-		s.Require().Equal("code_id", attr.Key)
+		tickerCodeID := 0
+		for _, attr := range event.Attributes {
+			if attr.Key == "code_id" {
+				tickerCodeID, err = strconv.Atoi(attr.Value)
+				s.Require().NoError(err)
+			}
+		}
+		s.Require().NotZero(tickerCodeID)
 
-		tickerCodeId, err := strconv.Atoi(attr.Value)
-		s.Require().NoError(err)
-		s.T().Logf("Found code ID %d for ticker contract", tickerCodeId)
+		s.T().Logf("Found code ID %d for ticker contract", tickerCodeID)
 
 		s.T().Log("Uploading proxy contract...")
 		res, err = s.chain.sendMsgs(*clientCtx, &uploadProxyMsg)
@@ -202,23 +205,26 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 
 		events = res.Logs[0].Events
 		event = events[len(events)-1]
-		attrsLen = len(event.Attributes)
-		attr = event.Attributes[attrsLen-1]
-		s.Require().Equal("code_id", attr.Key)
+		proxyCodeId := 0
+		for _, attr := range event.Attributes {
+			if attr.Key == "code_id" {
+				proxyCodeId, err = strconv.Atoi(attr.Value)
+				s.Require().NoError(err)
+			}
+		}
+		s.Require().NotZero(proxyCodeId)
 
-		proxyCodeId, err := strconv.Atoi(attr.Value)
-		s.Require().NoError(err)
 		s.T().Logf("Found code ID %d for proxy contract", proxyCodeId)
 
 		s.T().Log("Instantiating ticker contract...")
-		instantiateMsg, err := instantiateTickerContract(uint64(tickerCodeId), "test ticker", val.keyInfo.GetAddress(), StartCount)
+		instantiateMsg, err := instantiateTickerContract(uint64(tickerCodeID), "test ticker", val.keyInfo.GetAddress(), StartCount)
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
 		event = res.Logs[0].Events[0]
 		s.Require().NotNil(event)
-		attr = event.Attributes[0]
+		attr := event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
 		tickerContractInstance, err := sdktypes.AccAddressFromBech32(attr.Value)
 		s.Require().NoError(err)
