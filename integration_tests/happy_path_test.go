@@ -118,18 +118,21 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 
 		events := res.Logs[0].Events
 		event := events[len(events)-1]
-		attrsLen := len(event.Attributes)
-		attr := event.Attributes[attrsLen-1]
-		s.T().Logf("attributes: %v", event)
-		s.Require().Equal("code_id", attr.Key)
+		attr := event.Attributes[0]
+		codeID := 0
+		for _, attr := range event.Attributes {
+			if attr.Key == "code_id" {
+				codeID, err = strconv.Atoi(attr.Value)
+				s.Require().NoError(err)
+			}
+		}
+		s.Require().NotZero(codeID)
 
-		codeIdStr := attr.Value
-		codeId, err := strconv.Atoi(codeIdStr)
 		s.Require().NoError(err)
-		s.T().Logf("Found code ID %d for CW721 NFT contract", codeId)
+		s.T().Logf("Found code ID %d for CW721 NFT contract", codeID)
 
 		s.T().Log("Instantiating NFT token contract...")
-		instantiateMsg, err := instantiateNFTContract(uint64(codeId), "Skronk Token Internazionale", val.keyInfo.GetAddress())
+		instantiateMsg, err := instantiateNFTContract(uint64(codeID), "Skronk Token Internazionale", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)
