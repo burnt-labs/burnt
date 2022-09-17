@@ -3,6 +3,7 @@ package schedule.v1;
 
 import "gogoproto/gogo.proto";
 import "schedule/v1/params.proto";
+import "schedule/v1/tx.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
@@ -10,5 +11,6 @@ option go_package = "github.com/BurntFinance/burnt/x/schedule/types";
 // GenesisState defines the schedule module's genesis state.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
+  repeated MsgAddSchedule scheduled_calls = 2;
   // this line is used by starport scaffolding # genesis/proto/state
 }

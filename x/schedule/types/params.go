@@ -69,8 +69,8 @@ func validateMinimumBalance(i interface{}) error {
 	if !ok {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
-	if len(v.Denom) == 0 {
-		return fmt.Errorf("cannot provide empty minimum gas denom")
+	if err := sdk.ValidateDenom(v.Denom); err != nil {
+		return err
 	}
 	if v.Amount.Uint64() == 0 {
 		return fmt.Errorf("cannot provide empty minimum gas amount")
