@@ -113,6 +113,18 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			return false
 		}
 
+		executedEvent := types.ExecuteScheduledCallEvent{
+			BlockHeight:   uint64(ctx.BlockHeight()),
+			Gas:           &gasCoin,
+			Signer:        signer.String(),
+			Contract:      contract.String(),
+			BalanceBefore: &contractBalance,
+			CallBody:      call.CallBody,
+		}
+		if err := ctx.EventManager().EmitTypedEvent(&executedEvent); err != nil {
+			k.Logger(ctx).Error("error emitting event %v", executedEvent)
+		}
+
 		// check to make sure contract still has minimum balance
 		contractBalance = k.bankKeeper.GetBalance(ctx, contract, params.MinimumBalance.Denom)
 		if contractBalance.IsLT(params.MinimumBalance) {
@@ -130,8 +142,26 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 				"next block", nextBlock,
 				"current block", ctx.BlockHeight())
 			return false
+		} else if nextBlock > (uint64(ctx.BlockHeight()) + params.UpperBound) {
+			k.Logger(ctx).Debug("contract is trying to schedule a call too far in the future, skipping it",
+				"contract", contract,
+				"next block", nextBlock,
+				"current block", ctx.BlockHeight(),
+				"upper bound", params.UpperBound)
+			return false
 		}
 		k.AddScheduledCall(ctx, signer, contract, call.CallBody, nextBlock)
+		addEvent := types.AddScheduledCallEvent{
+			BlockHeight:     uint64(ctx.BlockHeight()),
+			ScheduledHeight: nextBlock,
+			Signer:          signer.String(),
+			Contract:        contract.String(),
+			Balance:         &contractBalance,
+			CallBody:        call.CallBody,
+		}
+		if err := ctx.EventManager().EmitTypedEvent(&addEvent); err != nil {
+			k.Logger(ctx).Error("error emitting event for add scheduled call: %v", addEvent)
+		}
 
 		return false
 	})

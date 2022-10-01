@@ -18,6 +18,10 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 		return nil, types.ErrInvalidScheduledBlockHeight
 	}
 
+	if msg.BlockHeight > (uint64(ctx.BlockHeight()) + k.GetParams(ctx).UpperBound) {
+		return nil, types.ErrTooFarInFuture
+	}
+
 	signer, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		return nil, err
@@ -47,7 +51,7 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 		return nil, types.ErrUnauthorized
 	}
 
-	// todo: anti spam protection. how do we keep this from getting blown up for free?
+	// todo: anti-spam protection. how do we keep this from getting blown up for free?
 	// probably we just charge gas for this
 
 	gasMinimum := k.GetParams(ctx).MinimumBalance
@@ -59,6 +63,15 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 	}
 
 	k.AddScheduledCall(ctx, signer, contract, msg.CallBody, msg.BlockHeight)
-
+	if err := ctx.EventManager().EmitTypedEvent(&types.AddScheduledCallEvent{
+		BlockHeight:     uint64(ctx.BlockHeight()),
+		ScheduledHeight: msg.BlockHeight,
+		Signer:          signer.String(),
+		Contract:        contract.String(),
+		Balance:         &balance,
+		CallBody:        msg.CallBody,
+	}); err != nil {
+		return nil, err
+	}
 	return &types.MsgAddScheduleResponse{}, nil
 }

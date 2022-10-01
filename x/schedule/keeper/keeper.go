@@ -61,8 +61,8 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func (k Keeper) AddScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte, blockHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, callBody)
-	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, callBody)
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract)
 
 	value := &types.ScheduledCall{
 		CallBody: callBody,
@@ -72,23 +72,23 @@ func (k Keeper) AddScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contrac
 	store.Set(byHeightKey, k.cdc.MustMarshal(value))
 }
 
-func (k Keeper) RemoveScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte) {
+func (k Keeper) RemoveScheduledCall(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress) {
 	store := ctx.KVStore(k.storeKey)
-	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, callBody)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract)
 
 	blockHeight := sdk.BigEndianToUint64(store.Get(byNameKey))
 	store.Delete(byNameKey)
 
-	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, callBody)
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract)
 	store.Delete(byHeightKey)
 }
 
-func (k Keeper) RemoveScheduledCallWithBlockHeight(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte, blockHeight uint64) {
+func (k Keeper) RemoveScheduledCallWithBlockHeight(ctx sdk.Context, signer sdk.AccAddress, contract sdk.AccAddress, blockHeight uint64) {
 	store := ctx.KVStore(k.storeKey)
-	byNameKey := types.MakeScheduledCallByNameKey(signer, contract, callBody)
+	byNameKey := types.MakeScheduledCallByNameKey(signer, contract)
 	store.Delete(byNameKey)
 
-	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract, callBody)
+	byHeightKey := types.MakeScheduledCallByBlockHeightKey(blockHeight, signer, contract)
 	store.Delete(byHeightKey)
 }
 
@@ -121,7 +121,7 @@ func (k Keeper) ConsumeScheduledCallsByHeight(ctx sdk.Context, blockHeight uint6
 
 		var call types.ScheduledCall
 		k.cdc.MustUnmarshal(iter.Value(), &call)
-		k.RemoveScheduledCallWithBlockHeight(ctx, signer, contract, call.CallBody, blockHeight)
+		k.RemoveScheduledCallWithBlockHeight(ctx, signer, contract, blockHeight)
 		if cb(signer, contract, &call) {
 			break
 		}

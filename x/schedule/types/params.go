@@ -13,6 +13,7 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 var (
 	ParamsStoreKeyMinimumBalance = []byte("MinimumBalance")
 	ParamsStoreKeyFeeReceiver    = []byte("FeeReceiver")
+	ParamsStoreKeyUpperBound     = []byte("UpperBound")
 
 	// Ensure that params implements the proper interface
 	_ paramtypes.ParamSet = (*Params)(nil)
@@ -41,6 +42,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamsStoreKeyMinimumBalance, &p.MinimumBalance, validateMinimumBalance),
 		paramtypes.NewParamSetPair(ParamsStoreKeyFeeReceiver, &p.FeeReceiver, validateFeeReceiver),
+		paramtypes.NewParamSetPair(ParamsStoreKeyUpperBound, &p.UpperBound, validateUpperBound),
 	}
 }
 
@@ -51,6 +53,9 @@ func (p Params) Validate() error {
 	}
 	if err := validateFeeReceiver(p.FeeReceiver); err != nil {
 		return sdkerrors.Wrap(err, "fee receiver")
+	}
+	if err := validateUpperBound(p.UpperBound); err != nil {
+		return sdkerrors.Wrap(err, "upper bound")
 	}
 
 	return nil
@@ -88,6 +93,19 @@ func validateFeeReceiver(i interface{}) error {
 	addr := sdk.AccAddress(val)
 	if addr.Empty() {
 		return fmt.Errorf("can't set no fee receiver addr")
+	}
+
+	return nil
+}
+
+func validateUpperBound(i interface{}) error {
+	val, ok := i.(uint64)
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	if val == 0 {
+		return fmt.Errorf("invalid value for upper bound, can't be zero")
 	}
 
 	return nil

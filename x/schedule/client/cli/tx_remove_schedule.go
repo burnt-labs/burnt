@@ -13,19 +13,13 @@ import (
 
 var _ = strconv.Itoa(0)
 
-func CmdAddSchedule() *cobra.Command {
+func CmdRemoveSchedule() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-schedule [contract] [call-body] [block-height]",
-		Short: "Broadcast message add_schedule",
-		Args:  cobra.ExactArgs(3),
+		Use:   "remove-schedule [contract]",
+		Short: "Broadcast message remove_schedule",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argContract, err := sdk.AccAddressFromBech32(args[0])
-			if err != nil {
-				return err
-			}
-			argCallBody := args[1]
-
-			argBlockHeight, err := strconv.Atoi(args[3])
 			if err != nil {
 				return err
 			}
@@ -35,11 +29,9 @@ func CmdAddSchedule() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgAddSchedule(
+			msg := types.NewMsgRemoveSchedule(
 				clientCtx.GetFromAddress(),
 				argContract,
-				[]byte(argCallBody),
-				uint64(argBlockHeight),
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
