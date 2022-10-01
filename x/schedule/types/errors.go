@@ -12,4 +12,5 @@ var (
 	ErrUnmetMinimumBalance         = sdkerrors.Register(ModuleName, 1101, "unmet minimum balance")
 	ErrUnauthorized                = sdkerrors.Register(ModuleName, 1102, "unauthorized")
 	ErrTooFarInFuture              = sdkerrors.Register(ModuleName, 1103, "scheduled block height exceeds upper bound into future")
+	ErrEmptyCallBody               = sdkerrors.Register(ModuleName, 1104, "empty scheduled call body")
 )

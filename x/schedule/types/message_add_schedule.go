@@ -46,6 +46,9 @@ func (msg *MsgAddSchedule) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid contract address (%s)", err)
 	}
+	if len(msg.CallBody) == 0 {
+		return sdkerrors.Wrapf(ErrEmptyCallBody, "call body can't be empty")
+	}
 
 	return nil
 }
