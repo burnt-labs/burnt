@@ -101,9 +101,6 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	appparams "github.com/BurntFinance/burnt/app/params"
-	burntmodule "github.com/BurntFinance/burnt/x/burnt"
-	burntmodulekeeper "github.com/BurntFinance/burnt/x/burnt/keeper"
-	burntmoduletypes "github.com/BurntFinance/burnt/x/burnt/types"
 	schedulemodule "github.com/BurntFinance/burnt/x/schedule"
 	schedulemodulekeeper "github.com/BurntFinance/burnt/x/schedule/keeper"
 	schedulemoduletypes "github.com/BurntFinance/burnt/x/schedule/types"
@@ -222,7 +219,6 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		burntmodule.AppModuleBasic{},
 		schedulemodule.AppModuleBasic{},
 		wasm.AppModuleBasic{},
 		ica.AppModuleBasic{},
@@ -305,8 +301,6 @@ type WasmApp struct {
 	ScopedICAHostKeeper  capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper     capabilitykeeper.ScopedKeeper
 
-	BurntKeeper burntmodulekeeper.Keeper
-
 	ScheduleKeeper schedulemodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
@@ -349,8 +343,8 @@ func NewWasmApp(
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
-		burntmoduletypes.StoreKey, authzkeeper.StoreKey, icahosttypes.StoreKey,
-		wasm.StoreKey, schedulemoduletypes.StoreKey,
+		authzkeeper.StoreKey, icahosttypes.StoreKey, wasm.StoreKey,
+		schedulemoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -511,14 +505,6 @@ func NewWasmApp(
 		&stakingKeeper, govRouter,
 	)
 
-	app.BurntKeeper = *burntmodulekeeper.NewKeeper(
-		appCodec,
-		keys[burntmoduletypes.StoreKey],
-		keys[burntmoduletypes.MemStoreKey],
-		app.GetSubspace(burntmoduletypes.ModuleName),
-	)
-	burntModule := burntmodule.NewAppModule(appCodec, app.BurntKeeper, app.AccountKeeper, app.BankKeeper)
-
 	app.ScheduleKeeper = *schedulemodulekeeper.NewKeeper(
 		appCodec,
 		keys[schedulemoduletypes.StoreKey],
@@ -571,7 +557,6 @@ func NewWasmApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
-		burntModule,
 		scheduleModule,
 		icaModule,
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
@@ -601,7 +586,6 @@ func NewWasmApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
-		burntmoduletypes.ModuleName,
 		schedulemoduletypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
@@ -627,7 +611,6 @@ func NewWasmApp(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
-		burntmoduletypes.ModuleName,
 		schedulemoduletypes.ModuleName,
 		// additional non simd modules
 		ibchost.ModuleName,
@@ -660,7 +643,6 @@ func NewWasmApp(
 		evidencetypes.ModuleName,
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
-		burntmoduletypes.ModuleName,
 		schedulemoduletypes.ModuleName,
 		icatypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
@@ -687,7 +669,7 @@ func NewWasmApp(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
-		burntModule,
+		scheduleModule,
 		// this line is used by starpornot t scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
@@ -884,7 +866,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
-	paramsKeeper.Subspace(burntmoduletypes.ModuleName)
 	paramsKeeper.Subspace(schedulemoduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
