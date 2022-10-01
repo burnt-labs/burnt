@@ -7,10 +7,14 @@ validator-run module.
 
 In order to use the module, a programmer must first deploy an instance of a
 contract that they would like to receive scheduled callbacks. This contract
-must have at least one method, to be designated as a callback, that accepts no
-arguments and returns an uint64 representing the next block it should be invoked
-on. If the block designated is less than or equal to the current block, the
-invocation should fail.
+must have at least two methods:
+  * IsOwner(address) - This will return whether the address is allowed to 
+    schedule and deschedule events for the contract. The contract can choose how
+    it wants to store and validate this info.
+  * An arbitrary function to be designated as a callback, that returns an uint64 
+    representing the next block it should be invoked on. If the block designated 
+    is less than or equal to the current block, or too far in the future for the 
+    module upper bound parameter, the invocation should fail.
 
 Programmers may interact with the module by sending the following message to
 the module:

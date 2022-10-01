@@ -62,7 +62,11 @@ func (k msgServer) AddSchedule(goCtx context.Context, msg *types.MsgAddSchedule)
 		return nil, types.ErrUnmetMinimumBalance
 	}
 
-	k.AddScheduledCall(ctx, signer, contract, msg.CallBody, msg.BlockHeight)
+	if existingScheduledBlockHeight := k.BlockHeightForSignerContract(ctx, signer, contract); existingScheduledBlockHeight != 0 {
+		k.ReScheduleCall(ctx, signer, contract, msg.CallBody, existingScheduledBlockHeight, msg.BlockHeight)
+	} else {
+		k.AddScheduledCall(ctx, signer, contract, msg.CallBody, msg.BlockHeight)
+	}
 	if err := ctx.EventManager().EmitTypedEvent(&types.AddScheduledCallEvent{
 		BlockHeight:     uint64(ctx.BlockHeight()),
 		ScheduledHeight: msg.BlockHeight,

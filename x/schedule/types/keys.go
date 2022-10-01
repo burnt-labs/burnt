@@ -51,6 +51,6 @@ func MakeScheduledCallByBlockHeightKey(blockHeight uint64, signer sdk.AccAddress
 	return bytes.Join([][]byte{MakeScheduledCallByBlockHeightPrefixKey(blockHeight), signer.Bytes(), contract.Bytes()}, []byte{})
 }
 
-func MakeScheduledCallByNameKey(signer sdk.AccAddress, contract sdk.AccAddress) []byte {
+func MakeScheduledCallBySignerContractKey(signer sdk.AccAddress, contract sdk.AccAddress) []byte {
 	return bytes.Join([][]byte{{ScheduledCallByNameKeyPrefix}, signer.Bytes(), contract.Bytes()}, []byte{})
 }
