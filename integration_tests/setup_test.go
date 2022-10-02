@@ -327,7 +327,7 @@ func (s *IntegrationTestSuite) runValidators() {
 			Repository: "burnt",
 			Tag:        "prebuilt",
 			Mounts: []string{
-				fmt.Sprintf("%s/:/root/.burnt", val.configDir()),
+				fmt.Sprintf("%s/:/home/burnt-user/.burnt", val.configDir()),
 			},
 			Entrypoint: []string{"burntd", "start", "--trace=true"},
 		}

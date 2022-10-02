@@ -186,10 +186,10 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 
 		events := res.Logs[0].Events
 		event := events[len(events)-1]
-		tickerCodeID := 0
+		tickerCodeID := uint64(0)
 		for _, attr := range event.Attributes {
 			if attr.Key == "code_id" {
-				tickerCodeID, err = strconv.Atoi(attr.Value)
+				tickerCodeID, err = strconv.ParseUint(attr.Value, 10, 0)
 				s.Require().NoError(err)
 			}
 		}
@@ -205,10 +205,10 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 
 		events = res.Logs[0].Events
 		event = events[len(events)-1]
-		proxyCodeId := 0
+		proxyCodeId := uint64(0)
 		for _, attr := range event.Attributes {
 			if attr.Key == "code_id" {
-				proxyCodeId, err = strconv.Atoi(attr.Value)
+				proxyCodeId, err = strconv.ParseUint(attr.Value, 10, 0)
 				s.Require().NoError(err)
 			}
 		}
@@ -217,7 +217,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.T().Logf("Found code ID %d for proxy contract", proxyCodeId)
 
 		s.T().Log("Instantiating ticker contract...")
-		instantiateMsg, err := instantiateTickerContract(uint64(tickerCodeID), "test ticker", val.keyInfo.GetAddress(), StartCount)
+		instantiateMsg, err := instantiateTickerContract(tickerCodeID, "test ticker", val.keyInfo.GetAddress(), StartCount)
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)
@@ -231,7 +231,7 @@ func (s *IntegrationTestSuite) TestScheduledCall() {
 		s.T().Logf("ticker contract instantiated at address: %s", tickerContractInstance.String())
 
 		s.T().Log("Instantiating proxy contract...")
-		instantiateMsg, err = instantiateProxyContract(uint64(proxyCodeId), "test proxy", val.keyInfo.GetAddress())
+		instantiateMsg, err = instantiateProxyContract(proxyCodeId, "test proxy", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)

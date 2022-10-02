@@ -25,7 +25,7 @@ func CmdAddSchedule() *cobra.Command {
 			}
 			argCallBody := args[1]
 
-			argBlockHeight, err := strconv.Atoi(args[3])
+			argBlockHeight, err := strconv.ParseUint(args[3], 10, 0)
 			if err != nil {
 				return err
 			}
@@ -39,7 +39,7 @@ func CmdAddSchedule() *cobra.Command {
 				clientCtx.GetFromAddress(),
 				argContract,
 				[]byte(argCallBody),
-				uint64(argBlockHeight),
+				argBlockHeight,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

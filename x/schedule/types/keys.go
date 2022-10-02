@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spaolacci/murmur3"
 )
 
 const (
@@ -34,13 +33,6 @@ const (
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)
-}
-
-func stringToHash(s string) []byte {
-	h64 := murmur3.New64()
-	h64.Write([]byte(s))
-
-	return sdk.Uint64ToBigEndian(h64.Sum64())
 }
 
 func MakeScheduledCallByBlockHeightPrefixKey(blockHeight uint64) []byte {
