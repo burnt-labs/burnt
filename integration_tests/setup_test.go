@@ -361,6 +361,7 @@ func (s *IntegrationTestSuite) runValidators() {
 			status, err := rpcClient.Status(context.Background())
 			if err != nil {
 				s.T().Logf("can't get container status: %s", err.Error())
+				s.T().Log(s.logsByContainerID(s.valResources[0].Container.ID))
 			}
 			if status == nil {
 				container, ok := s.dockerPool.ContainerByName("burnt0")
