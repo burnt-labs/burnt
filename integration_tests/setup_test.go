@@ -410,6 +410,7 @@ func (s *IntegrationTestSuite) logsByContainerID(id string) string {
 		docker.LogsOptions{
 			Container:    id,
 			OutputStream: &containerLogsBuf,
+			ErrorStream:  &containerLogsBuf,
 			Stdout:       true,
 			Stderr:       true,
 		},
