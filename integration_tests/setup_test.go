@@ -395,7 +395,7 @@ func (s *IntegrationTestSuite) runValidators() {
 
 			return true
 		},
-		10*time.Minute,
+		2*time.Minute,
 		15*time.Second,
 		"validator node failed to produce blocks",
 	)
