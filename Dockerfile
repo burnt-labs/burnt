@@ -33,14 +33,14 @@ RUN echo "Ensuring binary is statically linked ..." \
 # --------------------------------------------------------
 FROM alpine:3.15
 
-RUN adduser --disabled-password burnt-user
-USER burnt-user
-
 COPY --from=go-builder /code/build/burntd /usr/bin/burntd
 
-WORKDIR /burnt-user
-RUN mkdir /burnt-user/.burnt
-RUN chmod 777 /burnt-user/.burnt
+RUN adduser --disabled-password burnt-user
+RUN mkdir /home/burnt-user/.burnt
+RUN chmod 777 /home/burnt-user/.burnt
+USER burnt-user
+
+WORKDIR /home/burnt-user
 
 # rest server
 EXPOSE 1317
