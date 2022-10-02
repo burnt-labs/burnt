@@ -57,7 +57,7 @@ func (v *validator) configDir() string {
 
 func (v *validator) createConfig() error {
 	p := path.Join(v.configDir(), "config")
-	return os.MkdirAll(p, 0755)
+	return os.MkdirAll(p, 0777)
 }
 
 func (v *validator) init() error {
