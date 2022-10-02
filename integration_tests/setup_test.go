@@ -351,6 +351,9 @@ func (s *IntegrationTestSuite) runValidators() {
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
+	if err != nil {
+		s.T().Error(s.logsByContainerID(s.valResources[0].Container.ID))
+	}
 	s.Require().NoError(err)
 
 	s.Require().Eventually(
