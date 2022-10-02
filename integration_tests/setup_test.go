@@ -321,6 +321,7 @@ func (s *IntegrationTestSuite) runValidators() {
 
 	s.valResources = make([]*dockertest.Resource, len(s.chain.validators))
 	for i, val := range s.chain.validators {
+		s.Require().NoError(os.Chmod(val.configDir(), 0777))
 		runOpts := &dockertest.RunOptions{
 			Name:       val.instanceName(),
 			NetworkID:  s.dockerNetwork.Network.ID,
