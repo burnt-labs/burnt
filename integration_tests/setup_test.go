@@ -348,12 +348,12 @@ func (s *IntegrationTestSuite) runValidators() {
 
 		s.valResources[i] = resource
 		s.T().Logf("started validator container: %s", resource.Container.ID)
-		s.T().Logf("logs for container: %s\n%s", resource.Container.ID, s.logsByContainerID(resource.Container.ID))
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
 	if err != nil {
-		s.T().Error(s.logsByContainerID(s.valResources[0].Container.ID))
+		logs, errs := s.logsByContainerID(s.valResources[0].Container.ID)
+		s.T().Logf("logs for container: %s\nlogs: %s\n errs: %s", s.valResources[0].Container.ID, logs, errs)
 	}
 	s.Require().NoError(err)
 
@@ -361,7 +361,8 @@ func (s *IntegrationTestSuite) runValidators() {
 		func() bool {
 			status, err := rpcClient.Status(context.Background())
 			if err != nil {
-				s.T().Logf("logs for container: %s\n%s", s.valResources[0].Container.ID, s.logsByContainerID(s.valResources[0].Container.ID))
+				logs, errs := s.logsByContainerID(s.valResources[0].Container.ID)
+				s.T().Logf("logs for container: %s\nlogs: %s\n errs: %s", s.valResources[0].Container.ID, logs, errs)
 				s.T().Logf("can't get container status: %s", err.Error())
 			}
 			if status == nil {
@@ -370,7 +371,9 @@ func (s *IntegrationTestSuite) runValidators() {
 					s.T().Logf("no container by 'burnt0'")
 				} else {
 					if container.Container.State.Status == "exited" {
-						s.Fail("validators exited", "state: %s logs: \n%s", container.Container.State.String(), s.logsByContainerID(container.Container.ID))
+						logs, errs := s.logsByContainerID(s.valResources[0].Container.ID)
+						s.T().Logf("logs for container: %s\nlogs: %s\n errs: %s", s.valResources[0].Container.ID, logs, errs)
+						s.Fail("validators exited", "state: %s logs: \n%s errs: \n%s", container.Container.State.String(), logs, errs)
 						s.T().FailNow()
 
 					}
@@ -404,19 +407,20 @@ func noRestart(config *docker.HostConfig) {
 	}
 }
 
-func (s *IntegrationTestSuite) logsByContainerID(id string) string {
-	var containerLogsBuf bytes.Buffer
+func (s *IntegrationTestSuite) logsByContainerID(id string) (stdout string, stderr string) {
+	var containerStdoutBuf bytes.Buffer
+	var containerStderrBuf bytes.Buffer
 	s.Require().NoError(s.dockerPool.Client.Logs(
 		docker.LogsOptions{
 			Container:    id,
-			OutputStream: &containerLogsBuf,
-			ErrorStream:  &containerLogsBuf,
+			OutputStream: &containerStdoutBuf,
+			ErrorStream:  &containerStderrBuf,
 			Stdout:       true,
 			Stderr:       true,
 		},
 	))
 
-	return containerLogsBuf.String()
+	return containerStdoutBuf.String(), containerStderrBuf.String()
 }
 
 func (s *IntegrationTestSuite) TestBasicChain() {
