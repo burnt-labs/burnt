@@ -1,6 +1,6 @@
 # docker build . -t cosmwasm/wasmd:latest
 # docker run --rm -it cosmwasm/wasmd:latest /bin/sh
-FROM golang:1.18-alpine3.15 AS go-builder
+FROM golang:1.19.1-alpine3.16 AS go-builder
 ARG arch=x86_64
 
 # this comes from standard alpine nightly file
@@ -31,13 +31,13 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/burntd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.15
+FROM alpine:3.16
 
 COPY --from=go-builder /code/build/burntd /usr/bin/burntd
 
 RUN adduser --disabled-password burnt-user
-RUN mkdir /home/burnt-user/.burnt
-RUN chmod 777 /home/burnt-user/.burnt
+RUN mkdir -p /home/burnt-user/.burnt/config
+RUN chmod 777 -R /home/burnt-user/.burnt
 USER burnt-user
 
 WORKDIR /home/burnt-user
