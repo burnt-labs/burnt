@@ -348,6 +348,7 @@ func (s *IntegrationTestSuite) runValidators() {
 
 		s.valResources[i] = resource
 		s.T().Logf("started validator container: %s", resource.Container.ID)
+		s.T().Logf("logs for container: %s\n%s", resource.Container.ID, s.logsByContainerID(resource.Container.ID))
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
@@ -360,7 +361,7 @@ func (s *IntegrationTestSuite) runValidators() {
 		func() bool {
 			status, err := rpcClient.Status(context.Background())
 			if err != nil {
-				s.T().Log(s.logsByContainerID(s.valResources[0].Container.ID))
+				s.T().Logf("logs for container: %s\n%s", s.valResources[0].Container.ID, s.logsByContainerID(s.valResources[0].Container.ID))
 				s.T().Logf("can't get container status: %s", err.Error())
 			}
 			if status == nil {
