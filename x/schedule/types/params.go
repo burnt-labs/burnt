@@ -24,15 +24,16 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // NewParams creates a new Params instance
-func NewParams(gasMin sdk.Coin, feeReceiver sdk.AccAddress) Params {
+func NewParams(gasMin sdk.Coin, upperBound uint64) Params {
 	return Params{
 		MinimumBalance: gasMin,
+		UpperBound:     upperBound,
 	}
 }
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	return NewParams(sdk.NewCoin("default-token", sdk.NewInt(100)), sdk.AccAddress{})
+	return NewParams(sdk.NewCoin("default-token", sdk.NewInt(100)), 1000)
 }
 
 // ParamSetPairs get the params.ParamSet
