@@ -240,7 +240,6 @@ func (s *IntegrationTestSuite) initGenesis() {
 	var scheduleGenState scheduletypes.GenesisState
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[scheduletypes.ModuleName], &scheduleGenState))
 	scheduleGenState.Params.MinimumBalance = sdk.NewCoin(testDenom, sdk.NewInt(1000000))
-	scheduleGenState.Params.FeeReceiver = s.chain.validators[0].keyInfo.GetAddress()
 	scheduleGenState.Params.UpperBound = 1000
 	bz, err = cdc.MarshalJSON(&scheduleGenState)
 	s.Require().NoError(err)

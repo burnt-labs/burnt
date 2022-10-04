@@ -5,6 +5,7 @@ import (
 	"github.com/BurntFinance/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/feegrant"
 )
 
@@ -42,7 +43,6 @@ func (k Keeper) executeMsgWithGasLimit(ctx sdk.Context, contract sdk.AccAddress,
 
 func (k Keeper) EndBlocker(ctx sdk.Context) {
 	params := k.GetParams(ctx)
-	feeReceiver := sdk.AccAddress(params.FeeReceiver)
 	k.ConsumeScheduledCallsByHeight(ctx, uint64(ctx.BlockHeight()), func(signer sdk.AccAddress, contract sdk.AccAddress, call *types.ScheduledCall) (stop bool) {
 		k.Logger(ctx).Debug("consuming scheduled call",
 			"signer", signer,
@@ -92,11 +92,11 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			Amount: sdk.NewIntFromUint64(gasConsumed),
 		}
 
-		if sendErr := k.bankKeeper.SendCoins(ctx, contract, feeReceiver, sdk.Coins{gasCoin}); sendErr != nil {
-			k.Logger(ctx).Error("error sending gas from contract to receiver",
+		if sendErr := k.bankKeeper.SendCoinsFromAccountToModule(ctx, contract, authtypes.FeeCollectorName, sdk.Coins{gasCoin}); sendErr != nil {
+			k.Logger(ctx).Error("error sending gas from contract to receiver module",
 				"contract", contract,
+				"receiver module", authtypes.FeeCollectorName,
 				"gas consumed", gasConsumed,
-				"receiver", feeReceiver,
 				"call", call.CallBody,
 				"error", sendErr)
 		}
