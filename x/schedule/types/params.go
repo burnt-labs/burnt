@@ -12,7 +12,6 @@ var _ paramtypes.ParamSet = (*Params)(nil)
 
 var (
 	ParamsStoreKeyMinimumBalance = []byte("MinimumBalance")
-	ParamsStoreKeyFeeReceiver    = []byte("FeeReceiver")
 	ParamsStoreKeyUpperBound     = []byte("UpperBound")
 
 	// Ensure that params implements the proper interface
@@ -28,7 +27,6 @@ func ParamKeyTable() paramtypes.KeyTable {
 func NewParams(gasMin sdk.Coin, feeReceiver sdk.AccAddress) Params {
 	return Params{
 		MinimumBalance: gasMin,
-		FeeReceiver:    feeReceiver,
 	}
 }
 
@@ -41,7 +39,6 @@ func DefaultParams() Params {
 func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{
 		paramtypes.NewParamSetPair(ParamsStoreKeyMinimumBalance, &p.MinimumBalance, validateMinimumBalance),
-		paramtypes.NewParamSetPair(ParamsStoreKeyFeeReceiver, &p.FeeReceiver, validateFeeReceiver),
 		paramtypes.NewParamSetPair(ParamsStoreKeyUpperBound, &p.UpperBound, validateUpperBound),
 	}
 }
@@ -50,9 +47,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 func (p Params) Validate() error {
 	if err := validateMinimumBalance(p.MinimumBalance); err != nil {
 		return sdkerrors.Wrap(err, "minimum balance")
-	}
-	if err := validateFeeReceiver(p.FeeReceiver); err != nil {
-		return sdkerrors.Wrap(err, "fee receiver")
 	}
 	if err := validateUpperBound(p.UpperBound); err != nil {
 		return sdkerrors.Wrap(err, "upper bound")
@@ -79,20 +73,6 @@ func validateMinimumBalance(i interface{}) error {
 	}
 	if v.Amount.Uint64() == 0 {
 		return fmt.Errorf("cannot provide empty minimum gas amount")
-	}
-
-	return nil
-}
-
-func validateFeeReceiver(i interface{}) error {
-	val, ok := i.([]byte)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	addr := sdk.AccAddress(val)
-	if addr.Empty() {
-		return fmt.Errorf("can't set no fee receiver addr")
 	}
 
 	return nil
