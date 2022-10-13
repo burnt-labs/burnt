@@ -40,9 +40,15 @@ func (msg *MsgAddSchedule) GetSignBytes() []byte {
 }
 
 func (msg *MsgAddSchedule) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Signer)
-	if err != nil {
+	if _, err := sdk.AccAddressFromBech32(msg.Signer); err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid signer address (%s)", err)
 	}
+	if _, err := sdk.AccAddressFromBech32(msg.Contract); err != nil {
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid contract address (%s)", err)
+	}
+	if len(msg.CallBody) == 0 {
+		return sdkerrors.Wrapf(ErrEmptyCallBody, "call body can't be empty")
+	}
+
 	return nil
 }

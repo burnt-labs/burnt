@@ -101,16 +101,16 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 
 	s.T().Log("tearing down e2e integration test suite...")
 
-	s.T().Log("removing data directory")
-	s.Require().NoError(os.RemoveAll(s.chain.dataDir))
-
-	s.T().Log("removing containers")
+	s.T().Log("removing validator nodes")
 	for _, vc := range s.valResources {
-		s.Require().NoError(s.dockerPool.Purge(vc))
+		s.Require().NoError(s.dockerPool.RemoveContainerByName(vc.Container.Name))
 	}
 
 	s.T().Log("removing network")
 	s.Require().NoError(s.dockerPool.RemoveNetwork(s.dockerNetwork))
+
+	s.T().Log("removing data directory")
+	s.Require().NoError(os.RemoveAll(s.chain.dataDir))
 }
 
 func (s *IntegrationTestSuite) initNodes(nodeCount int) {
@@ -240,7 +240,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 	var scheduleGenState scheduletypes.GenesisState
 	s.Require().NoError(cdc.UnmarshalJSON(appGenState[scheduletypes.ModuleName], &scheduleGenState))
 	scheduleGenState.Params.MinimumBalance = sdk.NewCoin(testDenom, sdk.NewInt(1000000))
-	scheduleGenState.Params.FeeReceiver = s.chain.validators[0].keyInfo.GetAddress()
+	scheduleGenState.Params.UpperBound = 1000
 	bz, err = cdc.MarshalJSON(&scheduleGenState)
 	s.Require().NoError(err)
 	appGenState[scheduletypes.ModuleName] = bz
@@ -268,7 +268,7 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		vpr.SetConfigFile(tmCfgPath)
 		s.Require().NoError(vpr.ReadInConfig())
 
-		valConfig := &tmconfig.Config{}
+		valConfig := tmconfig.DefaultConfig()
 		s.Require().NoError(vpr.Unmarshal(valConfig))
 
 		valConfig.P2P.ListenAddress = "tcp://0.0.0.0:26656"
@@ -350,12 +350,18 @@ func (s *IntegrationTestSuite) runValidators() {
 	}
 
 	rpcClient, err := rpchttp.New("tcp://localhost:26657", "/websocket")
+	if err != nil {
+		logs, errs := s.logsByContainerID(s.valResources[0].Container.ID)
+		s.T().Logf("logs for container: %s\nlogs: %s\n errs: %s", s.valResources[0].Container.ID, logs, errs)
+	}
 	s.Require().NoError(err)
 
 	s.Require().Eventually(
 		func() bool {
 			status, err := rpcClient.Status(context.Background())
 			if err != nil {
+				logs, errs := s.logsByContainerID(s.valResources[0].Container.ID)
+				s.T().Logf("logs for container: %s\nlogs: %s\n errs: %s", s.valResources[0].Container.ID, logs, errs)
 				s.T().Logf("can't get container status: %s", err.Error())
 			}
 			if status == nil {
@@ -364,7 +370,9 @@ func (s *IntegrationTestSuite) runValidators() {
 					s.T().Logf("no container by 'burnt0'")
 				} else {
 					if container.Container.State.Status == "exited" {
-						s.Fail("validators exited", "state: %s logs: \n%s", container.Container.State.String(), s.logsByContainerID(container.Container.ID))
+						logs, errs := s.logsByContainerID(s.valResources[0].Container.ID)
+						s.T().Logf("logs for container: %s\nlogs: %s\n errs: %s", s.valResources[0].Container.ID, logs, errs)
+						s.Fail("validators exited", "state: %s logs: \n%s errs: \n%s", container.Container.State.String(), logs, errs)
 						s.T().FailNow()
 
 					}
@@ -385,7 +393,7 @@ func (s *IntegrationTestSuite) runValidators() {
 
 			return true
 		},
-		10*time.Minute,
+		2*time.Minute,
 		15*time.Second,
 		"validator node failed to produce blocks",
 	)
@@ -398,18 +406,20 @@ func noRestart(config *docker.HostConfig) {
 	}
 }
 
-func (s *IntegrationTestSuite) logsByContainerID(id string) string {
-	var containerLogsBuf bytes.Buffer
+func (s *IntegrationTestSuite) logsByContainerID(id string) (stdout string, stderr string) {
+	var containerStdoutBuf bytes.Buffer
+	var containerStderrBuf bytes.Buffer
 	s.Require().NoError(s.dockerPool.Client.Logs(
 		docker.LogsOptions{
 			Container:    id,
-			OutputStream: &containerLogsBuf,
+			OutputStream: &containerStdoutBuf,
+			ErrorStream:  &containerStderrBuf,
 			Stdout:       true,
 			Stderr:       true,
 		},
 	))
 
-	return containerLogsBuf.String()
+	return containerStdoutBuf.String(), containerStderrBuf.String()
 }
 
 func (s *IntegrationTestSuite) TestBasicChain() {
