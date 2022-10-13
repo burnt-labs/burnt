@@ -122,7 +122,9 @@ func (k Keeper) EndBlocker(ctx sdk.Context) {
 			CallBody:      call.CallBody,
 		}
 		if err := ctx.EventManager().EmitTypedEvent(&executedEvent); err != nil {
-			k.Logger(ctx).Error("error emitting event %v", executedEvent)
+			k.Logger(ctx).Error("error emitting event",
+				"event", executedEvent,
+				"error", err)
 		}
 
 		// check to make sure contract still has minimum balance
