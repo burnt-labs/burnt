@@ -28,8 +28,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 
 	// mint coins, update supply
 	neededCoin := minter.BlockProvision(params)
-	var mintedCoin sdk.Coin
-	var burnedCoin sdk.Coin
+	mintedCoin := sdk.NewCoin(params.MintDenom, sdk.ZeroInt())
+	burnedCoin := sdk.NewCoin(params.MintDenom, sdk.ZeroInt())
 
 	if collectedFeeCoin.IsLT(neededCoin) {
 		// if the fee collector has not collected enough fees to meet the
