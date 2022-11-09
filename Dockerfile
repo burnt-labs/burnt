@@ -12,17 +12,27 @@ RUN apk add git
 # NOTE: add these to run with LEDGER_ENABLED=true
 # RUN apk add libusb-dev linux-headers
 
-WORKDIR /code
-COPY . /code/
-
 # See https://github.com/CosmWasm/wasmvm/releases
 ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.1.0/libwasmvm_muslc.aarch64.a /lib/libwasmvm_muslc.aarch64.a
 ADD https://github.com/CosmWasm/wasmvm/releases/download/v1.1.0/libwasmvm_muslc.x86_64.a /lib/libwasmvm_muslc.x86_64.a
 RUN sha256sum /lib/libwasmvm_muslc.aarch64.a | grep 728993b91b35037ae8d9933c3a9ee018e49a7926571ce4109f55d9954efcbe9a
 RUN sha256sum /lib/libwasmvm_muslc.x86_64.a | grep d06607db7bda6d3981f0717133584dd5480a6bca7b1e208b4526e68f3ccf3b31
-
 # Copy the library you want to the final location that will be found by the linker flag `-lwasmvm_muslc`
 RUN cp /lib/libwasmvm_muslc.${arch}.a /lib/libwasmvm_muslc.a
+
+WORKDIR /code
+COPY ./.git /code/.git
+COPY ./app /code/app
+COPY ./cmd /code/cmd
+COPY ./contrib /code/contrib
+COPY ./proto /code/proto
+COPY ./testutil /code/testutil
+COPY ./x /code/x
+COPY go.mod /code/
+COPY go.sum /code/
+COPY Makefile /code/
+
+RUN ls /code
 
 # force it to use static lib (from above) not standard libgo_cosmwasm.so file
 RUN LEDGER_ENABLED=false BUILD_TAGS=muslc LINK_STATICALLY=true make build
@@ -31,7 +41,7 @@ RUN echo "Ensuring binary is statically linked ..." \
   && (file /code/build/burntd | grep "statically linked")
 
 # --------------------------------------------------------
-FROM alpine:3.16
+FROM alpine:3.16 AS burnt-release
 
 COPY --from=go-builder /code/build/burntd /usr/bin/burntd
 
@@ -45,3 +55,20 @@ EXPOSE 26656
 EXPOSE 26657
 
 CMD ["/usr/bin/burntd", "start"]
+
+FROM burnt-release
+
+COPY ./docker/local-config /burnt/config
+COPY ./docker/entrypoint.sh /root/entrypoint.sh
+RUN chmod +x /root/entrypoint.sh
+
+# rest server
+EXPOSE 1317
+# tendermint p2p
+EXPOSE 26656
+# tendermint rpc
+EXPOSE 26657
+
+VOLUME [ "/burnt/data" ]
+
+CMD ["/root/entrypoint.sh"]
