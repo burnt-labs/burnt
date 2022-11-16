@@ -52,7 +52,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 			defer telemetry.ModuleSetGauge(types.ModuleName, float32(mintedCoin.Amount.Int64()), "minted_tokens")
 		}
 
-	} else if collectedFeeCoin.IsGTE(neededCoin) {
+	} else {
 		// if the fee collector has collected more fees than are needed to meet the
 		// staking incentive goals, burn the rest.
 		burnedCoin = collectedFeeCoin.Sub(neededCoin)

@@ -670,7 +670,7 @@ func NewWasmApp(
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
 		scheduleModule,
-		// this line is used by starpornot t scaffolding # stargate/app/appModule
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
 
