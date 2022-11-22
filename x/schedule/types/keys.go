@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spaolacci/murmur3"
 )
 
 const (
@@ -36,21 +35,14 @@ func KeyPrefix(p string) []byte {
 	return []byte(p)
 }
 
-func stringToHash(s string) []byte {
-	h64 := murmur3.New64()
-	h64.Write([]byte(s))
-
-	return sdk.Uint64ToBigEndian(h64.Sum64())
-}
-
 func MakeScheduledCallByBlockHeightPrefixKey(blockHeight uint64) []byte {
 	return bytes.Join([][]byte{{ScheduledCallByBlockHeightKeyPrefix}, sdk.Uint64ToBigEndian(blockHeight)}, []byte{})
 }
 
-func MakeScheduledCallByBlockHeightKey(blockHeight uint64, signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte) []byte {
-	return bytes.Join([][]byte{MakeScheduledCallByBlockHeightPrefixKey(blockHeight), signer.Bytes(), contract.Bytes(), callBody}, []byte{})
+func MakeScheduledCallByBlockHeightKey(blockHeight uint64, signer sdk.AccAddress, contract sdk.AccAddress) []byte {
+	return bytes.Join([][]byte{MakeScheduledCallByBlockHeightPrefixKey(blockHeight), signer.Bytes(), contract.Bytes()}, []byte{})
 }
 
-func MakeScheduledCallByNameKey(signer sdk.AccAddress, contract sdk.AccAddress, callBody []byte) []byte {
-	return bytes.Join([][]byte{{ScheduledCallByNameKeyPrefix}, signer.Bytes(), contract.Bytes(), callBody}, []byte{})
+func MakeScheduledCallBySignerContractKey(signer sdk.AccAddress, contract sdk.AccAddress) []byte {
+	return bytes.Join([][]byte{{ScheduledCallByNameKeyPrefix}, signer.Bytes(), contract.Bytes()}, []byte{})
 }

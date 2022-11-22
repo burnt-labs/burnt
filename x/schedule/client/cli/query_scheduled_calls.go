@@ -2,24 +2,23 @@ package cli
 
 import (
 	"context"
-
-	"github.com/BurntFinance/burnt/x/burnt/types"
+	"github.com/BurntFinance/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 )
 
-func CmdQueryParams() *cobra.Command {
+func CmdQueryScheduledCalls() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "shows the parameters of the module",
-		Args:  cobra.NoArgs,
+		Use: "scheduled-calls",
+		Short: "returns all scheduled calls",
+		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
+			res, err := queryClient.ScheduledCalls(context.Background(), &types.QueryScheduledCallsRequest{})
 			if err != nil {
 				return err
 			}

@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"strconv"
 
-	wasmutils "github.com/CosmWasm/wasmd/x/wasm/client/utils"
+	wasmutils "github.com/CosmWasm/wasmd/x/wasm/ioutils"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/types"
 )
@@ -118,24 +118,27 @@ func (s *IntegrationTestSuite) TestHappyPath() {
 
 		events := res.Logs[0].Events
 		event := events[len(events)-1]
-		attrsLen := len(event.Attributes)
-		attr := event.Attributes[attrsLen-1]
-		s.Require().Equal("code_id", attr.Key)
+		codeID := uint64(0)
+		for _, attr := range event.Attributes {
+			if attr.Key == "code_id" {
+				codeID, err = strconv.ParseUint(attr.Value, 10, 0)
+				s.Require().NoError(err)
+			}
+		}
+		s.Require().NotZero(codeID)
 
-		codeIdStr := attr.Value
-		codeId, err := strconv.Atoi(codeIdStr)
 		s.Require().NoError(err)
-		s.T().Logf("Found code ID %d for CW721 NFT contract", codeId)
+		s.T().Logf("Found code ID %d for CW721 NFT contract", codeID)
 
 		s.T().Log("Instantiating NFT token contract...")
-		instantiateMsg, err := instantiateNFTContract(uint64(codeId), "Skronk Token Internazionale", val.keyInfo.GetAddress())
+		instantiateMsg, err := instantiateNFTContract(codeID, "Skronk Token Internazionale", val.keyInfo.GetAddress())
 		s.Require().NoError(err)
 		res, err = s.chain.sendMsgs(*clientCtx, &instantiateMsg)
 		s.Require().NoError(err)
 		s.Require().Zero(res.Code)
 		event = res.Logs[0].Events[0]
 		s.Require().NotNil(event)
-		attr = event.Attributes[0]
+		attr := event.Attributes[0]
 		s.Require().Equal("_contract_address", attr.Key)
 		contractAddress := attr.Value
 		s.T().Logf("NFT token contract instantiated at address: %s", contractAddress)

@@ -133,38 +133,132 @@ func (m *MsgAddScheduleResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddScheduleResponse proto.InternalMessageInfo
 
+type MsgRemoveSchedule struct {
+	Signer   string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	Contract string `protobuf:"bytes,2,opt,name=contract,proto3" json:"contract,omitempty"`
+}
+
+func (m *MsgRemoveSchedule) Reset()         { *m = MsgRemoveSchedule{} }
+func (m *MsgRemoveSchedule) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveSchedule) ProtoMessage()    {}
+func (*MsgRemoveSchedule) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6dbb6bf326a164fd, []int{2}
+}
+func (m *MsgRemoveSchedule) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveSchedule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveSchedule.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveSchedule) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveSchedule.Merge(m, src)
+}
+func (m *MsgRemoveSchedule) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveSchedule) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveSchedule.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveSchedule proto.InternalMessageInfo
+
+func (m *MsgRemoveSchedule) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgRemoveSchedule) GetContract() string {
+	if m != nil {
+		return m.Contract
+	}
+	return ""
+}
+
+type MsgRemoveScheduleResponse struct {
+}
+
+func (m *MsgRemoveScheduleResponse) Reset()         { *m = MsgRemoveScheduleResponse{} }
+func (m *MsgRemoveScheduleResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgRemoveScheduleResponse) ProtoMessage()    {}
+func (*MsgRemoveScheduleResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6dbb6bf326a164fd, []int{3}
+}
+func (m *MsgRemoveScheduleResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgRemoveScheduleResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgRemoveScheduleResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgRemoveScheduleResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgRemoveScheduleResponse.Merge(m, src)
+}
+func (m *MsgRemoveScheduleResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgRemoveScheduleResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgRemoveScheduleResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgRemoveScheduleResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgAddSchedule)(nil), "schedule.v1.MsgAddSchedule")
 	proto.RegisterType((*MsgAddScheduleResponse)(nil), "schedule.v1.MsgAddScheduleResponse")
+	proto.RegisterType((*MsgRemoveSchedule)(nil), "schedule.v1.MsgRemoveSchedule")
+	proto.RegisterType((*MsgRemoveScheduleResponse)(nil), "schedule.v1.MsgRemoveScheduleResponse")
 }
 
 func init() { proto.RegisterFile("schedule/v1/tx.proto", fileDescriptor_6dbb6bf326a164fd) }
 
 var fileDescriptor_6dbb6bf326a164fd = []byte{
-	// 364 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0xb1, 0x8e, 0xda, 0x30,
-	0x1c, 0xc6, 0x31, 0xb4, 0x08, 0x0c, 0xea, 0x10, 0xa1, 0x2a, 0x82, 0x2a, 0xa2, 0xa9, 0x2a, 0x51,
-	0x55, 0x8d, 0x4b, 0xdb, 0x17, 0x20, 0x43, 0xc5, 0xc2, 0x12, 0xb6, 0x2e, 0x91, 0x63, 0x5b, 0x8e,
-	0xd5, 0x60, 0x47, 0xb6, 0x41, 0x64, 0x65, 0xec, 0x54, 0xa9, 0xaf, 0xd2, 0xa1, 0x8f, 0xd0, 0x11,
-	0xb5, 0xcb, 0x8d, 0x27, 0xb8, 0x07, 0x39, 0x91, 0x0b, 0x1c, 0x48, 0xa7, 0xbb, 0xf1, 0xfb, 0xfe,
-	0xdf, 0xf7, 0x93, 0xfd, 0xff, 0xc3, 0x9e, 0x21, 0x29, 0xa3, 0xcb, 0x8c, 0xa1, 0xd5, 0x18, 0xd9,
-	0x75, 0x90, 0x6b, 0x65, 0x95, 0xd3, 0x39, 0xba, 0xc1, 0x6a, 0xdc, 0x7f, 0x6b, 0x53, 0xa1, 0x69,
-	0x9c, 0x63, 0x6d, 0x0b, 0x44, 0x94, 0x59, 0x28, 0x13, 0x97, 0xb1, 0x4a, 0xdc, 0x75, 0xfa, 0xaf,
-	0xb8, 0x52, 0x3c, 0x63, 0x08, 0xe7, 0x02, 0x61, 0x29, 0x95, 0xc5, 0x56, 0x28, 0x59, 0x4d, 0xfd,
-	0x3f, 0x00, 0xbe, 0x98, 0x19, 0x3e, 0xa1, 0x74, 0x5e, 0xa1, 0x9d, 0x8f, 0xb0, 0x69, 0x04, 0x97,
-	0x4c, 0xbb, 0x60, 0x08, 0x46, 0xed, 0xd0, 0xfd, 0xf7, 0xfb, 0x43, 0xaf, 0x42, 0x4e, 0x28, 0xd5,
-	0xcc, 0x98, 0xb9, 0xd5, 0x42, 0xf2, 0xa8, 0xca, 0x39, 0x5f, 0x60, 0x8b, 0x28, 0x69, 0x35, 0x26,
-	0xd6, 0xad, 0x3f, 0xd1, 0x39, 0x25, 0x9d, 0x01, 0x6c, 0x13, 0x9c, 0x65, 0x71, 0xa2, 0x68, 0xe1,
-	0x36, 0x86, 0x60, 0xd4, 0x8d, 0x5a, 0x07, 0x23, 0x54, 0xb4, 0x70, 0x5e, 0xc3, 0x6e, 0x92, 0x29,
-	0xf2, 0x3d, 0x4e, 0x99, 0xe0, 0xa9, 0x75, 0x9f, 0x0f, 0xc1, 0xe8, 0x59, 0xd4, 0x29, 0xbd, 0x69,
-	0x69, 0xf9, 0x2e, 0x7c, 0x79, 0xf9, 0xf2, 0x88, 0x99, 0x5c, 0x49, 0xc3, 0x3e, 0xfd, 0x00, 0xb0,
-	0x31, 0x33, 0xdc, 0xd9, 0x00, 0xd8, 0x39, 0xff, 0xd9, 0x20, 0x38, 0xdb, 0x5f, 0x70, 0x59, 0xee,
-	0xbf, 0x79, 0x64, 0x78, 0x24, 0xfb, 0xe3, 0xcd, 0xff, 0x9b, 0x5f, 0xf5, 0xf7, 0xfe, 0x3b, 0x14,
-	0x2e, 0xb5, 0xb4, 0x5f, 0x85, 0xc4, 0x92, 0x30, 0x94, 0x1c, 0x04, 0x3a, 0x9d, 0x0c, 0x53, 0x1a,
-	0x1f, 0x45, 0x38, 0xfd, 0xbb, 0xf3, 0xc0, 0x76, 0xe7, 0x81, 0xeb, 0x9d, 0x07, 0x7e, 0xee, 0xbd,
-	0xda, 0x76, 0xef, 0xd5, 0xae, 0xf6, 0x5e, 0xed, 0x5b, 0xc0, 0x85, 0x4d, 0x97, 0x49, 0x40, 0xd4,
-	0xe2, 0x21, 0xdc, 0xfa, 0x1e, 0x68, 0x8b, 0x9c, 0x99, 0xa4, 0x59, 0x9e, 0xec, 0xf3, 0x6d, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0xdc, 0x4f, 0xb3, 0x45, 0x1c, 0x02, 0x00, 0x00,
+	// 419 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x52, 0x41, 0x8e, 0xd3, 0x30,
+	0x14, 0xad, 0x3b, 0x30, 0x9a, 0x71, 0x47, 0x23, 0x11, 0x8d, 0x50, 0x48, 0x51, 0x54, 0x82, 0x40,
+	0x45, 0x40, 0x4c, 0x61, 0x2e, 0x30, 0x59, 0xa0, 0xd9, 0x74, 0x93, 0xee, 0xd8, 0x44, 0x8e, 0x6d,
+	0x39, 0x16, 0xa9, 0x1d, 0xd9, 0x6e, 0xd5, 0x88, 0x5d, 0x0f, 0x80, 0x90, 0x58, 0x72, 0x0d, 0x16,
+	0x1c, 0x81, 0x65, 0x05, 0x1b, 0x96, 0xa8, 0xe5, 0x20, 0xa8, 0x21, 0x0d, 0x6d, 0x41, 0x65, 0xc7,
+	0xf2, 0xbf, 0xf7, 0xff, 0xf3, 0x7b, 0xdf, 0x1f, 0x5e, 0x18, 0x92, 0x31, 0x3a, 0xc9, 0x19, 0x9a,
+	0x0e, 0x90, 0x9d, 0x85, 0x85, 0x56, 0x56, 0x39, 0x9d, 0x0d, 0x1a, 0x4e, 0x07, 0xde, 0x03, 0x9b,
+	0x09, 0x4d, 0x93, 0x02, 0x6b, 0x5b, 0x22, 0xa2, 0xcc, 0x58, 0x99, 0xa4, 0x6a, 0xab, 0x8b, 0x5f,
+	0x33, 0xde, 0x5d, 0xae, 0x14, 0xcf, 0x19, 0xc2, 0x85, 0x40, 0x58, 0x4a, 0x65, 0xb1, 0x15, 0x4a,
+	0xd6, 0x6c, 0xf0, 0x09, 0xc0, 0xf3, 0xa1, 0xe1, 0x57, 0x94, 0x8e, 0x6a, 0x69, 0xe7, 0x19, 0x3c,
+	0x36, 0x82, 0x4b, 0xa6, 0x5d, 0xd0, 0x03, 0xfd, 0xd3, 0xc8, 0xfd, 0xf2, 0xf1, 0xe9, 0x45, 0x2d,
+	0x79, 0x45, 0xa9, 0x66, 0xc6, 0x8c, 0xac, 0x16, 0x92, 0xc7, 0x75, 0x9f, 0x73, 0x09, 0x4f, 0x88,
+	0x92, 0x56, 0x63, 0x62, 0xdd, 0xf6, 0x3f, 0x66, 0x9a, 0x4e, 0xa7, 0x0b, 0x4f, 0x09, 0xce, 0xf3,
+	0x24, 0x55, 0xb4, 0x74, 0x8f, 0x7a, 0xa0, 0x7f, 0x16, 0x9f, 0xac, 0x81, 0x48, 0xd1, 0xd2, 0xb9,
+	0x07, 0xcf, 0xd2, 0x5c, 0x91, 0xd7, 0x49, 0xc6, 0x04, 0xcf, 0xac, 0x7b, 0xb3, 0x07, 0xfa, 0x37,
+	0xe2, 0x4e, 0x85, 0x5d, 0x57, 0x50, 0xe0, 0xc2, 0xdb, 0xbb, 0xce, 0x63, 0x66, 0x0a, 0x25, 0x0d,
+	0x0b, 0xde, 0xc0, 0x5b, 0x43, 0xc3, 0x63, 0x36, 0x56, 0x53, 0xf6, 0xbf, 0x63, 0x05, 0x5d, 0x78,
+	0xe7, 0x8f, 0xc7, 0x37, 0xce, 0x9e, 0x7f, 0x68, 0xc3, 0xa3, 0xa1, 0xe1, 0xce, 0x1c, 0xc0, 0xce,
+	0xf6, 0xce, 0xbb, 0xe1, 0xd6, 0xcf, 0x86, 0xbb, 0xb1, 0xbc, 0xfb, 0x07, 0xc8, 0x26, 0xf3, 0x60,
+	0xfe, 0xf5, 0xc7, 0xfb, 0xf6, 0xe3, 0xe0, 0x11, 0x8a, 0x26, 0x5a, 0xda, 0x97, 0x42, 0x62, 0x49,
+	0x18, 0x4a, 0xd7, 0x05, 0x6a, 0x8e, 0x09, 0x53, 0x9a, 0x6c, 0x0a, 0xe7, 0x2d, 0x80, 0xe7, 0x7b,
+	0x4b, 0xf2, 0xf7, 0x9f, 0xda, 0xe5, 0xbd, 0x87, 0x87, 0xf9, 0xc6, 0xcd, 0x65, 0xe5, 0x26, 0x0c,
+	0x9e, 0x1c, 0x74, 0xa3, 0xab, 0xe1, 0xc6, 0x50, 0x74, 0xfd, 0x79, 0xe9, 0x83, 0xc5, 0xd2, 0x07,
+	0xdf, 0x97, 0x3e, 0x78, 0xb7, 0xf2, 0x5b, 0x8b, 0x95, 0xdf, 0xfa, 0xb6, 0xf2, 0x5b, 0xaf, 0x42,
+	0x2e, 0x6c, 0x36, 0x49, 0x43, 0xa2, 0xc6, 0x7f, 0x53, 0x9c, 0xfd, 0xd6, 0xb4, 0x65, 0xc1, 0x4c,
+	0x7a, 0x5c, 0x5d, 0xf7, 0x8b, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xc6, 0x31, 0xbd, 0x4c, 0x47,
+	0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -180,6 +274,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	AddSchedule(ctx context.Context, in *MsgAddSchedule, opts ...grpc.CallOption) (*MsgAddScheduleResponse, error)
+	RemoveSchedule(ctx context.Context, in *MsgRemoveSchedule, opts ...grpc.CallOption) (*MsgRemoveScheduleResponse, error)
 }
 
 type msgClient struct {
@@ -199,9 +294,19 @@ func (c *msgClient) AddSchedule(ctx context.Context, in *MsgAddSchedule, opts ..
 	return out, nil
 }
 
+func (c *msgClient) RemoveSchedule(ctx context.Context, in *MsgRemoveSchedule, opts ...grpc.CallOption) (*MsgRemoveScheduleResponse, error) {
+	out := new(MsgRemoveScheduleResponse)
+	err := c.cc.Invoke(ctx, "/schedule.v1.Msg/RemoveSchedule", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	AddSchedule(context.Context, *MsgAddSchedule) (*MsgAddScheduleResponse, error)
+	RemoveSchedule(context.Context, *MsgRemoveSchedule) (*MsgRemoveScheduleResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -210,6 +315,9 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) AddSchedule(ctx context.Context, req *MsgAddSchedule) (*MsgAddScheduleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddSchedule not implemented")
+}
+func (*UnimplementedMsgServer) RemoveSchedule(ctx context.Context, req *MsgRemoveSchedule) (*MsgRemoveScheduleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveSchedule not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -234,6 +342,24 @@ func _Msg_AddSchedule_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_RemoveSchedule_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgRemoveSchedule)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).RemoveSchedule(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/schedule.v1.Msg/RemoveSchedule",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).RemoveSchedule(ctx, req.(*MsgRemoveSchedule))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "schedule.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -241,6 +367,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddSchedule",
 			Handler:    _Msg_AddSchedule_Handler,
+		},
+		{
+			MethodName: "RemoveSchedule",
+			Handler:    _Msg_RemoveSchedule_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -319,6 +449,66 @@ func (m *MsgAddScheduleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgRemoveSchedule) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveSchedule) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveSchedule) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Contract) > 0 {
+		i -= len(m.Contract)
+		copy(dAtA[i:], m.Contract)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Contract)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgRemoveScheduleResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgRemoveScheduleResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgRemoveScheduleResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -355,6 +545,32 @@ func (m *MsgAddSchedule) Size() (n int) {
 }
 
 func (m *MsgAddScheduleResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgRemoveSchedule) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.Contract)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgRemoveScheduleResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -563,6 +779,170 @@ func (m *MsgAddScheduleResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgAddScheduleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveSchedule) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveSchedule: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveSchedule: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Contract", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Contract = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgRemoveScheduleResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgRemoveScheduleResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgRemoveScheduleResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
