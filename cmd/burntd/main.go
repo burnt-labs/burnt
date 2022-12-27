@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/BurntFinance/burnt/app"
+	"github.com/burnt-labs/burnt/app"
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 )

@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
-	"github.com/BurntFinance/burnt/app"
-	"github.com/BurntFinance/burnt/app/params"
 	"github.com/CosmWasm/wasmd/x/wasm"
+	"github.com/burnt-labs/burnt/app"
+	"github.com/burnt-labs/burnt/app/params"
 	"io"
 	"os"
 	"path/filepath"

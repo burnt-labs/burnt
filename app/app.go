@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	schedulemodule "github.com/BurntFinance/burnt/x/schedule"
+	schedulemodule "github.com/burnt-labs/burnt/x/schedule"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -119,9 +119,9 @@ import (
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
-	appparams "github.com/BurntFinance/burnt/app/params"
-	schedulemodulekeeper "github.com/BurntFinance/burnt/x/schedule/keeper"
-	schedulemoduletypes "github.com/BurntFinance/burnt/x/schedule/types"
+	appparams "github.com/burnt-labs/burnt/app/params"
+	schedulemodulekeeper "github.com/burnt-labs/burnt/x/schedule/keeper"
+	schedulemoduletypes "github.com/burnt-labs/burnt/x/schedule/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 

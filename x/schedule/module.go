@@ -11,9 +11,9 @@ import (
 
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/BurntFinance/burnt/x/schedule/client/cli"
-	"github.com/BurntFinance/burnt/x/schedule/keeper"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule/client/cli"
+	"github.com/burnt-labs/burnt/x/schedule/keeper"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"

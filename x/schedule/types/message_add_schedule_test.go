@@ -3,7 +3,7 @@ package types
 import (
 	"testing"
 
-	"github.com/BurntFinance/burnt/testutil/sample"
+	"github.com/burnt-labs/burnt/testutil/sample"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 )

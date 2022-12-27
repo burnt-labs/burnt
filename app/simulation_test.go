@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/BurntFinance/burnt/app"
+	"github.com/burnt-labs/burnt/app"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/simapp"

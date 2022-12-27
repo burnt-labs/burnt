@@ -3,9 +3,9 @@ package schedule
 import (
 	"math/rand"
 
-	"github.com/BurntFinance/burnt/testutil/sample"
-	schedulesimulation "github.com/BurntFinance/burnt/x/schedule/simulation"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/testutil/sample"
+	schedulesimulation "github.com/burnt-labs/burnt/x/schedule/simulation"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"

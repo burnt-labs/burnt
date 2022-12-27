@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/BurntFinance/burnt/app/params"
+	"github.com/burnt-labs/burnt/app/params"
 	"github.com/cosmos/cosmos-sdk/std"
 )
 

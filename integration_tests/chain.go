@@ -23,8 +23,8 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	rpchttp "github.com/tendermint/tendermint/rpc/client/http"
 
-	"github.com/BurntFinance/burnt/app"
-	"github.com/BurntFinance/burnt/app/params"
+	"github.com/burnt-labs/burnt/app"
+	"github.com/burnt-labs/burnt/app/params"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	scheduletypes "github.com/BurntFinance/burnt/x/schedule/types"
+	scheduletypes "github.com/burnt-labs/burnt/x/schedule/types"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/BurntFinance/burnt/app"
+	"github.com/burnt-labs/burnt/app"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"

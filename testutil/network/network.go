@@ -18,7 +18,7 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/BurntFinance/burnt/app"
+	"github.com/burnt-labs/burnt/app"
 )
 
 type (

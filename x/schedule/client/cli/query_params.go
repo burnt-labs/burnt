@@ -3,7 +3,7 @@ package cli
 import (
 	"context"
 
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"

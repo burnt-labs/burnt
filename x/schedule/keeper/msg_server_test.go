@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	keepertest "github.com/BurntFinance/burnt/testutil/keeper"
-	"github.com/BurntFinance/burnt/x/schedule/keeper"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	keepertest "github.com/burnt-labs/burnt/testutil/keeper"
+	"github.com/burnt-labs/burnt/x/schedule/keeper"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 

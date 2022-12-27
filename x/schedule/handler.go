@@ -3,8 +3,8 @@ package schedule
 import (
 	"fmt"
 
-	"github.com/BurntFinance/burnt/x/schedule/keeper"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule/keeper"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )

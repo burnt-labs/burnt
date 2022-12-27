@@ -1,4 +1,4 @@
-module github.com/BurntFinance/burnt
+module github.com/burnt-labs/burnt
 
 go 1.18
 

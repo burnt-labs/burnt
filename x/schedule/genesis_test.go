@@ -3,10 +3,10 @@ package schedule_test
 import (
 	"testing"
 
-	keepertest "github.com/BurntFinance/burnt/testutil/keeper"
-	"github.com/BurntFinance/burnt/testutil/nullify"
-	"github.com/BurntFinance/burnt/x/schedule"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	keepertest "github.com/burnt-labs/burnt/testutil/keeper"
+	"github.com/burnt-labs/burnt/testutil/nullify"
+	"github.com/burnt-labs/burnt/x/schedule"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/stretchr/testify/require"
 )
 
