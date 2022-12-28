@@ -119,9 +119,9 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	appparams "github.com/burnt-labs/burnt/app/params"
-	schedulemodule "github.com/burnt-labs/burnt/x/schedule"
-	schedulemodulekeeper "github.com/burnt-labs/burnt/x/schedule/keeper"
-	schedulemoduletypes "github.com/burnt-labs/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule"
+	schedulekeeper "github.com/burnt-labs/burnt/x/schedule/keeper"
+	scheduletypes "github.com/burnt-labs/burnt/x/schedule/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -237,6 +237,7 @@ var (
 		ica.AppModuleBasic{},
 		intertx.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
+		schedule.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -250,7 +251,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
 		icatypes.ModuleName:            nil,
-		schedulemoduletypes.ModuleName: {authtypes.Burner},
+		scheduletypes.ModuleName:       {authtypes.Burner},
 		wasm.ModuleName:                {authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -318,7 +319,7 @@ type WasmApp struct {
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 
-	ScheduleKeeper schedulemodulekeeper.Keeper
+	ScheduleKeeper schedulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -362,7 +363,7 @@ func NewWasmApp(
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		feegrant.StoreKey, authzkeeper.StoreKey, wasm.StoreKey, icahosttypes.StoreKey,
 		icacontrollertypes.StoreKey, intertxtypes.StoreKey, ibcfeetypes.StoreKey,
-		schedulemoduletypes.StoreKey,
+		scheduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -673,7 +674,7 @@ func NewWasmApp(
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
 		ica.NewAppModule(&app.ICAControllerKeeper, &app.ICAHostKeeper),
 		intertx.NewAppModule(appCodec, app.InterTxKeeper),
-		schedulemodule.NewAppModule(appCodec, app.ScheduleKeeper),
+		schedule.NewAppModule(appCodec, app.ScheduleKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants), // always be last to make sure that it checks for all invariants and not only part of them
 	)
@@ -699,7 +700,7 @@ func NewWasmApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
-		schedulemoduletypes.ModuleName,
+		scheduletypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
@@ -726,7 +727,7 @@ func NewWasmApp(
 		paramstypes.ModuleName,
 		upgradetypes.ModuleName,
 		vestingtypes.ModuleName,
-		schedulemoduletypes.ModuleName,
+		scheduletypes.ModuleName,
 		// additional non simd modules
 		ibctransfertypes.ModuleName,
 		ibchost.ModuleName,
@@ -766,7 +767,7 @@ func NewWasmApp(
 		icatypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		intertxtypes.ModuleName,
-		schedulemoduletypes.ModuleName,
+		scheduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 		// wasm after ibc transfer
 		wasm.ModuleName,
@@ -1040,7 +1041,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(icahosttypes.SubModuleName)
 	paramsKeeper.Subspace(icacontrollertypes.SubModuleName)
-	paramsKeeper.Subspace(schedulemoduletypes.ModuleName)
+	paramsKeeper.Subspace(scheduletypes.ModuleName)
 	paramsKeeper.Subspace(wasm.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
