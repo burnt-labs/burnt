@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 	"io"
 	"net/http"
 	"os"
@@ -238,6 +239,7 @@ var (
 		intertx.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
 		schedule.AppModuleBasic{},
+		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
@@ -258,6 +260,7 @@ var (
 )
 
 var (
+	_ cosmoscmd.App           = (*WasmApp)(nil)
 	_ simapp.App              = (*WasmApp)(nil)
 	_ servertypes.Application = (*WasmApp)(nil)
 )
@@ -635,6 +638,16 @@ func NewWasmApp(
 		app.BankKeeper,
 		&stakingKeeper,
 		govRouter,
+	)
+	app.ScheduleKeeper = *schedulekeeper.NewKeeper(
+		appCodec,
+		keys[scheduletypes.StoreKey],
+		keys[scheduletypes.MemStoreKey],
+		app.GetSubspace(scheduletypes.ModuleName),
+		app.WasmKeeper,
+		wasmkeeper.NewDefaultPermissionKeeper(app.WasmKeeper),
+		app.FeeGrantKeeper,
+		app.BankKeeper,
 	)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
