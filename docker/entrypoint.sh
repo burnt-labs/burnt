@@ -7,4 +7,4 @@ if [[ ! -f /burnt/data/priv_validator_state.json ]]; then
     mv /burnt-config /burnt/config
 fi
 
-burntd start --home /burnt
+burntd start --home /burnt --trace --log_level trace
