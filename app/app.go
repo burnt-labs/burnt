@@ -815,6 +815,8 @@ func NewWasmApp(
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		ibc.NewAppModule(app.IBCKeeper),
 		transfer.NewAppModule(app.TransferKeeper),
+		schedule.NewAppModule(appCodec, app.ScheduleKeeper),
+		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
 	app.sm.RegisterStoreDecoders()
