@@ -2,7 +2,7 @@ package cli
 
 import (
 	"context"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -10,9 +10,9 @@ import (
 
 func CmdQueryScheduledCalls() *cobra.Command {
 	cmd := &cobra.Command{
-		Use: "scheduled-calls",
+		Use:   "scheduled-calls",
 		Short: "returns all scheduled calls",
-		Args: cobra.NoArgs,
+		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 

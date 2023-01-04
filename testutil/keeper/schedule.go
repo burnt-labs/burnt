@@ -3,8 +3,8 @@ package keeper
 import (
 	"testing"
 
-	"github.com/BurntFinance/burnt/x/schedule/keeper"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule/keeper"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"

@@ -3,8 +3,8 @@ package integration_tests
 import (
 	"context"
 	"encoding/json"
-	scheduletypes "github.com/BurntFinance/burnt/x/schedule/types"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	scheduletypes "github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"

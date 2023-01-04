@@ -3,8 +3,8 @@ package keeper_test
 import (
 	"testing"
 
-	testkeeper "github.com/BurntFinance/burnt/testutil/keeper"
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	testkeeper "github.com/burnt-labs/burnt/testutil/keeper"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/stretchr/testify/require"
 )
 

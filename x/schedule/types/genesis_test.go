@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/BurntFinance/burnt/x/schedule/types"
+	"github.com/burnt-labs/burnt/x/schedule/types"
 	"github.com/stretchr/testify/require"
 )
 
