@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/burnt-labs/burnt/x/dungeon"
 	"github.com/gorilla/mux"
 	"github.com/spf13/cast"
 	"io"
@@ -597,6 +598,7 @@ func NewWasmApp(
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
+	transferStack = dungeon.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
