@@ -1,12 +1,31 @@
 version: "3.9"
 services:
+
   testnet:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: localdev
+    platform: linux/amd64
     volumes:
       - testnet-data:/burnt/data
     ports:
       - "1317:1317"
       - "26656:26656"
       - "26657:26657"
+
+  release:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: burnt-release
+    platform: linux/amd64
+    volumes:
+      - testnet-data:/burnt/data
+    ports:
+      - "1317:1317"
+      - "26656:26656"
+      - "26657:26657"
+
 volumes:
   testnet-data:
