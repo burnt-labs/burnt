@@ -59,5 +59,5 @@ func (im IBCMiddleware) SendPacket(
 		return im.keeper.SendPacket(ctx, chanCap, packet)
 	}
 
-	return nil
+	return im.keeper.SendPacket(ctx, chanCap, packet)
 }
