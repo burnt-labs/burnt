@@ -104,16 +104,6 @@ jobs:
         uses: docker/metadata-action@v3
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-burnt
-      - name: docker orchestrator metadata
-        id: meta-orchestrator
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-orchestrator
-      - name: docker hardhat metadata
-        id: meta-hardhat
-        uses: docker/metadata-action@v3
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-hardhat
       - name: pull burnt image
         run: docker pull ${{ steps.meta-burnt.outputs.tags }}
       - name: rename burnt image

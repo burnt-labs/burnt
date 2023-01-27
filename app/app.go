@@ -598,7 +598,7 @@ func NewWasmApp(
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
-	transferStack = dungeon.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
+	transferStack = dungeon.NewIBCMiddleware(transferStack, app.IBCFeeKeeper, &app.StakingKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
