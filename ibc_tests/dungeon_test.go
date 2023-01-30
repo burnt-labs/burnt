@@ -3,7 +3,6 @@ package ibc_tests
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -25,21 +24,33 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	ctx := context.Background()
 
-	imageTag := os.Getenv("BURNT_IMAGE")
+	//imageTag := os.Getenv("BURNT_IMAGE")
+	imageTag := "burnt:v0.0.2"
 	imageTagComponents := strings.Split(imageTag, ":")
 
 	// Chain factory
 	cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*ibctest.ChainSpec{
-		{Name: "burnt", Version: "v1.0.0", ChainConfig: ibc.ChainConfig{
-			Images: []ibc.DockerImage{
-				{
-					Repository: imageTagComponents[0],
-					Version:    imageTagComponents[1],
-				},
-			},
-			GasPrices: "0.0uburnt",
-		}},
 		{Name: "osmosis", Version: "v11.0.0"},
+		{
+			Name:    "burnt",
+			Version: "v0.0.2",
+			ChainConfig: ibc.ChainConfig{
+				Images: []ibc.DockerImage{
+					{
+						Repository: imageTagComponents[0],
+						Version:    imageTagComponents[1],
+						UidGid:     "1025:1025",
+					},
+				},
+				GasPrices:      "0uburnt",
+				Type:           "cosmos",
+				ChainID:        "burnt-1",
+				Bin:            "burntd",
+				Bech32Prefix:   "burnt",
+				Denom:          "uburnt",
+				TrustingPeriod: "336h",
+			},
+		},
 	})
 
 	chains, err := cf.Chains(t.Name())
