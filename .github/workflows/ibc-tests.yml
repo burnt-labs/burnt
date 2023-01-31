@@ -57,7 +57,7 @@ jobs:
 
       - name: push heighliner image to github repo
         run: |
-          docker tag burnt:local ${{ steps.meta-burnt.outputs.tags }}
+          docker tag burnt:local ${{ steps.meta.outputs.tags }}
           docker push burnt:local
 
       - name: Move Docker cache
