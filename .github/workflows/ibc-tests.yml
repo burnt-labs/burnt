@@ -52,7 +52,7 @@ jobs:
       - name: retrieve heighliner binary
         run: | 
           curl -O -L https://github.com/strangelove-ventures/heighliner/releases/download/v1.0.0/heighliner_1.0.0_linux_amd64.tar.gz
-          tar -xfz heighliner_1.0.0_linux_amd64.tar.gz
+          tar -xf heighliner_1.0.0_linux_amd64.tar.gz
           ./heighliner build -c burnt --local
 
       - name: push heighliner image to github repo
