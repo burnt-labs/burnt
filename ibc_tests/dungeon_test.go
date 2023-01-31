@@ -42,7 +42,8 @@ func TestDungeonTransferBlock(t *testing.T) {
 						UidGid:     "1025:1025",
 					},
 				},
-				GasPrices:      "0uburnt",
+				GasPrices:      "0.0uburnt",
+				GasAdjustment:  1.3,
 				Type:           "cosmos",
 				ChainID:        "burnt-1",
 				Bin:            "burntd",
@@ -95,6 +96,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	)
 
 	// Create and Fund User Wallets
+	t.Log("creating and funding user accounts")
 	fundAmount := int64(10_000_000)
 	users := ibctest.GetAndFundTestUsers(t, ctx, "default", fundAmount, burnt, osmosis)
 	gaiaUser := users[0]
@@ -105,6 +107,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.Equal(t, fundAmount, gaiaUserBalInitial)
 
 	// Get Channel ID
+	t.Log("getting IBC channel IDs")
 	gaiaChannelInfo, err := relayer.GetChannels(ctx, eRep, burnt.Config().ChainID)
 	require.NoError(t, err)
 	gaiaChannelID := gaiaChannelInfo[0].ChannelID
@@ -114,6 +117,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	osmoChannelID := osmoChannelInfo[0].ChannelID
 
 	// Send Transaction
+	t.Log("sending tokens from burnt to osmosis")
 	amountToSend := int64(1_000_000)
 	dstAddress := osmosisUser.FormattedAddress()
 	transfer := ibc.WalletAmount{

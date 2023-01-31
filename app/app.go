@@ -2,9 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/burnt-labs/burnt/x/dungeon"
-	"github.com/gorilla/mux"
-	"github.com/spf13/cast"
 	"io"
 	"net/http"
 	"os"
@@ -100,6 +97,8 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+	"github.com/gorilla/mux"
+	"github.com/spf13/cast"
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 
 	// Note: please do your research before using this in production app, this is a demo and not an officially
@@ -121,6 +120,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	appparams "github.com/burnt-labs/burnt/app/params"
+	"github.com/burnt-labs/burnt/x/dungeon"
 	"github.com/burnt-labs/burnt/x/schedule"
 	schedulekeeper "github.com/burnt-labs/burnt/x/schedule/keeper"
 	scheduletypes "github.com/burnt-labs/burnt/x/schedule/types"
