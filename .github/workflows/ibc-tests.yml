@@ -57,6 +57,7 @@ jobs:
 
       - name: push heighliner image to github repo
         run: |
+          docker images
           docker tag burnt:local ${{ steps.meta.outputs.tags }}
           docker push burnt:local
 
