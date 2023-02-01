@@ -3,16 +3,20 @@ package ibc_tests
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	"github.com/strangelove-ventures/ibctest/v6"
-	"github.com/strangelove-ventures/ibctest/v6/ibc"
-	"github.com/strangelove-ventures/ibctest/v6/testreporter"
+	ibctest "github.com/strangelove-ventures/interchaintest/v6"
+	"github.com/strangelove-ventures/interchaintest/v6/ibc"
+	"github.com/strangelove-ventures/interchaintest/v6/testreporter"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func TestDungeonTransferBlock(t *testing.T) {
@@ -24,8 +28,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	ctx := context.Background()
 
-	//imageTag := os.Getenv("BURNT_IMAGE")
-	imageTag := "burnt:v0.0.2"
+	imageTag := os.Getenv("BURNT_IMAGE")
 	imageTagComponents := strings.Split(imageTag, ":")
 
 	// Chain factory
@@ -108,13 +111,24 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	// Get Channel ID
 	t.Log("getting IBC channel IDs")
-	gaiaChannelInfo, err := relayer.GetChannels(ctx, eRep, burnt.Config().ChainID)
+	burntChannelInfo, err := relayer.GetChannels(ctx, eRep, burnt.Config().ChainID)
 	require.NoError(t, err)
-	gaiaChannelID := gaiaChannelInfo[0].ChannelID
+	burntChannelID := burntChannelInfo[0].ChannelID
 
 	osmoChannelInfo, err := relayer.GetChannels(ctx, eRep, osmosis.Config().ChainID)
 	require.NoError(t, err)
 	osmoChannelID := osmoChannelInfo[0].ChannelID
+
+	// Query staking denom
+	grpcAddress := burnt.GetHostGRPCAddress()
+	conn, err := grpc.Dial(grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	defer conn.Close()
+
+	stakingQueryClient := stakingtypes.NewQueryClient(conn)
+	paramsResponse, err := stakingQueryClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
+	require.NoError(t, err)
+	require.Equal(t, "uburnt", paramsResponse.Params.BondDenom)
 
 	// Send Transaction
 	t.Log("sending tokens from burnt to osmosis")
@@ -125,13 +139,13 @@ func TestDungeonTransferBlock(t *testing.T) {
 		Denom:   burnt.Config().Denom,
 		Amount:  amountToSend,
 	}
-	tx, err := burnt.SendIBCTransfer(ctx, gaiaChannelID, gaiaUser.KeyName(), transfer, ibc.TransferOptions{})
+	tx, err := burnt.SendIBCTransfer(ctx, burntChannelID, gaiaUser.KeyName(), transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
 	require.NoError(t, tx.Validate())
 
 	// relay packets and acknowledgments
 	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
-	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, gaiaChannelID))
+	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
 
 	// test source wallet has decreased funds
 	expectedBal := gaiaUserBalInitial - amountToSend
@@ -140,7 +154,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.Equal(t, expectedBal, gaiaUserBalNew)
 
 	// Trace IBC Denom
-	srcDenomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", gaiaChannelID, burnt.Config().Denom))
+	srcDenomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", burntChannelID, burnt.Config().Denom))
 	dstIbcDenom := srcDenomTrace.IBCDenom()
 
 	// Test destination wallet has increased funds

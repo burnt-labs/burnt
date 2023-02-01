@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/cosmos/ibc-go/v6 v6.1.0
-	github.com/strangelove-ventures/ibctest/v6 v6.0.0-20230123222451-9af23973441b
+	github.com/strangelove-ventures/interchaintest/v6 v6.0.0-20230131024613-0bdc194c2aa1
 	github.com/stretchr/testify v1.8.1
 	go.uber.org/zap v1.24.0
 )
