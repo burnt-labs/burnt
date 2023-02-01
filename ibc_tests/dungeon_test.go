@@ -60,7 +60,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
 
-	burnt, osmosis := chains[0], chains[1]
+	osmosis, burnt := chains[0], chains[1]
 
 	// Relayer Factory
 	client, network := ibctest.DockerSetup(t)
@@ -102,12 +102,14 @@ func TestDungeonTransferBlock(t *testing.T) {
 	t.Log("creating and funding user accounts")
 	fundAmount := int64(10_000_000)
 	users := ibctest.GetAndFundTestUsers(t, ctx, "default", fundAmount, burnt, osmosis)
-	gaiaUser := users[0]
+	burntUser := users[0]
 	osmosisUser := users[1]
+	t.Logf("created burnt user %s", burntUser.FormattedAddress())
+	t.Logf("created osmosis user %s", osmosisUser.FormattedAddress())
 
-	gaiaUserBalInitial, err := burnt.GetBalance(ctx, gaiaUser.FormattedAddress(), burnt.Config().Denom)
+	burntUserBalInitial, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), burnt.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, fundAmount, gaiaUserBalInitial)
+	require.Equal(t, fundAmount, burntUserBalInitial)
 
 	// Get Channel ID
 	t.Log("getting IBC channel IDs")
@@ -120,10 +122,11 @@ func TestDungeonTransferBlock(t *testing.T) {
 	osmoChannelID := osmoChannelInfo[0].ChannelID
 
 	// Query staking denom
+	t.Log("verifying staking denom")
 	grpcAddress := burnt.GetHostGRPCAddress()
 	conn, err := grpc.Dial(grpcAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	require.NoError(t, err)
 	defer conn.Close()
+	require.NoError(t, err)
 
 	stakingQueryClient := stakingtypes.NewQueryClient(conn)
 	paramsResponse, err := stakingQueryClient.Params(ctx, &stakingtypes.QueryParamsRequest{})
@@ -139,7 +142,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 		Denom:   burnt.Config().Denom,
 		Amount:  amountToSend,
 	}
-	tx, err := burnt.SendIBCTransfer(ctx, burntChannelID, gaiaUser.KeyName(), transfer, ibc.TransferOptions{})
+	tx, err := burnt.SendIBCTransfer(ctx, burntChannelID, burntUser.KeyName(), transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
 	require.NoError(t, tx.Validate())
 
@@ -148,8 +151,8 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
 
 	// test source wallet has decreased funds
-	expectedBal := gaiaUserBalInitial - amountToSend
-	gaiaUserBalNew, err := burnt.GetBalance(ctx, gaiaUser.FormattedAddress(), burnt.Config().Denom)
+	expectedBal := burntUserBalInitial - amountToSend
+	gaiaUserBalNew, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), burnt.Config().Denom)
 	require.NoError(t, err)
 	require.Equal(t, expectedBal, gaiaUserBalNew)
 
@@ -158,6 +161,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	dstIbcDenom := srcDenomTrace.IBCDenom()
 
 	// Test destination wallet has increased funds
+	t.Log("verifying receipt of tokens on osmosis")
 	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), dstIbcDenom)
 	require.NoError(t, err)
 	require.Equal(t, amountToSend, osmosUserBalNew)
