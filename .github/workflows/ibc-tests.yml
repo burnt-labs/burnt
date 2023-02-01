@@ -51,11 +51,11 @@ jobs:
             type=semver,pattern=v{{version}}
       - name: retrieve heighliner binary
         run: | 
-          curl -O -L https://github.com/strangelove-ventures/heighliner/releases/download/v1.0.0/heighliner_1.0.0_linux_amd64.tar.gz
-          tar -xf heighliner_1.0.0_linux_amd64.tar.gz
+          curl -O -L https://github.com/strangelove-ventures/heighliner/releases/download/v1.1.0/heighliner_1.1.0_linux_amd64.tar.gz
+          tar -xf heighliner_1.1.0_linux_amd64.tar.gz
 
       - name: build heighliner burnt image
-        run: ./heighliner build -c burnt -f ibc_tests/chains.yml --local
+        run: ./heighliner build -c burnt --local
 
       - name: push heighliner image to github repo
         run: |
