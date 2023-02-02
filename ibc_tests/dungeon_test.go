@@ -36,7 +36,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 		{Name: "osmosis", Version: "v11.0.0"},
 		{
 			Name:    "burnt",
-			Version: "v0.0.2",
+			Version: imageTagComponents[1],
 			ChainConfig: ibc.ChainConfig{
 				Images: []ibc.DockerImage{
 					{
