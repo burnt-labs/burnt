@@ -2,7 +2,14 @@ package ibc_tests
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	paramsproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
+	"github.com/icza/dyno"
 	"os"
 	"strings"
 	"testing"
@@ -19,6 +26,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const (
+	votingPeriod = "10s"
+	maxDepositPeriod = "10x"
+)
 func TestDungeonTransferBlock(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping in short mode")
@@ -35,8 +46,8 @@ func TestDungeonTransferBlock(t *testing.T) {
 	cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*ibctest.ChainSpec{
 		{Name: "osmosis", Version: "v11.0.0"},
 		{
-			Name:    "burnt",
-			Version: "v0.0.2",
+			Name:    imageTagComponents[0],
+			Version: imageTagComponents[1],
 			ChainConfig: ibc.ChainConfig{
 				Images: []ibc.DockerImage{
 					{
@@ -53,6 +64,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 				Bech32Prefix:   "burnt",
 				Denom:          "uburnt",
 				TrustingPeriod: "336h",
+				ModifyGenesis: modifyGenesisShortProposals(votingPeriod, maxDepositPeriod),
 			},
 		},
 	})
@@ -133,6 +145,31 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "uburnt", paramsResponse.Params.BondDenom)
 
+	// Disable sends of Burnt staking token
+	t.Log("disabling sendability of burnt staking token")
+	sendEnableds := []*banktypes.SendEnabled{
+		{
+			Denom: "uburnt",
+			Enabled: false,
+		},
+	}
+	data, err := json.Marshal(sendEnableds)
+	require.NoError(t, err)
+
+	proposal := paramsproposal.NewParameterChangeProposal(
+		"disable burnt send",
+		"disable burnt send but longer",
+		[]paramsproposal.ParamChange{
+		{
+			Subspace: banktypes.ModuleName,
+			Key: "SendEnabled",
+			Value: string(data),
+			},
+		},
+		)
+	govClient := govtypes.NewMsgClient(conn)
+	govClient.SubmitProposal(ctx, govtypes.NewMsgSubmitProposal(proposal, sdktypes.Coins{}, burnt.)
+
 	// Send Transaction
 	t.Log("sending tokens from burnt to osmosis")
 	amountToSend := int64(1_000_000)
@@ -165,4 +202,28 @@ func TestDungeonTransferBlock(t *testing.T) {
 	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), dstIbcDenom)
 	require.NoError(t, err)
 	require.Equal(t, amountToSend, osmosUserBalNew)
+}
+
+
+func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) func(ibc.ChainConfig, []byte) ([]byte, error) {
+	return func(chainConfig ibc.ChainConfig, genbz []byte) ([]byte, error) {
+		g := make(map[string]interface{})
+		if err := json.Unmarshal(genbz, &g); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal genesis file: %w", err)
+		}
+		if err := dyno.Set(g, votingPeriod, "app_state", "gov", "voting_params", "voting_period"); err != nil {
+			return nil, fmt.Errorf("failed to set voting period in genesis json: %w", err)
+		}
+		if err := dyno.Set(g, maxDepositPeriod, "app_state", "gov", "deposit_params", "max_deposit_period"); err != nil {
+			return nil, fmt.Errorf("failed to set voting period in genesis json: %w", err)
+		}
+		if err := dyno.Set(g, chainConfig.Denom, "app_state", "gov", "deposit_params", "min_deposit", 0, "denom"); err != nil {
+			return nil, fmt.Errorf("failed to set voting period in genesis json: %w", err)
+		}
+		out, err := json.Marshal(g)
+		if err != nil {
+			return nil, fmt.Errorf("failed to marshal genesis bytes to json: %w", err)
+		}
+		return out, nil
+	}
 }

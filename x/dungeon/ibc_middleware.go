@@ -8,6 +8,8 @@ import (
 	transfertypes "github.com/cosmos/ibc-go/v4/modules/apps/transfer/types"
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	"github.com/cosmos/ibc-go/v4/modules/core/exported"
+	"log"
+	"strings"
 )
 
 type IBCMiddleware struct {
@@ -44,20 +46,24 @@ func (im IBCMiddleware) SendPacket(
 		// not have a transfer module, or c) the transfer module has been modified
 		// to accept other Packets. The best thing we can do here is pass the packet
 		// on down the stack.
-		return im.keeper.SendPacket(ctx, chanCap, packet)
+		panic("IBC packet was not deserialized to FungibleTokenPacketData")
+		return im.SendPacket(ctx, chanCap, packet)
 	}
 
 	// checks to make sure that the sending chain is our chain
 	if transfertypes.SenderChainIsSource(packet.GetSourcePort(), packet.GetSourceChannel(), data.Denom) {
 
 		// if the denomination of the token being sent is our bond token, block it
-		if data.Denom == im.keeper.stakingKeeper.BondDenom(ctx) {
+		if strings.EqualFold(data.Denom, im.keeper.stakingKeeper.BondDenom(ctx)) {
+			panic("this should be a success")
 			return types.ErrTokenTransferBlocked
 		}
 
+		log.Panicf("IBC packet was FungibleTokenPacketData and originated in burnt, denom: %v", data)
 		// otherwise, send the token
-		return im.keeper.SendPacket(ctx, chanCap, packet)
+		return im.SendPacket(ctx, chanCap, packet)
 	}
 
-	return im.keeper.SendPacket(ctx, chanCap, packet)
+	panic("IBC packet didn't originate here")
+	return im.SendPacket(ctx, chanCap, packet)
 }
