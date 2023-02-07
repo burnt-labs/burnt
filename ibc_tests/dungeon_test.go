@@ -4,20 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	paramsproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
-	"github.com/icza/dyno"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
 
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	paramsutils "github.com/cosmos/cosmos-sdk/x/params/client/utils"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	transfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
+	"github.com/icza/dyno"
 	ibctest "github.com/strangelove-ventures/interchaintest/v6"
+	"github.com/strangelove-ventures/interchaintest/v6/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"github.com/strangelove-ventures/interchaintest/v6/testreporter"
 	"github.com/stretchr/testify/require"
@@ -27,9 +26,10 @@ import (
 )
 
 const (
-	votingPeriod = "10s"
-	maxDepositPeriod = "10x"
+	votingPeriod     = "10s"
+	maxDepositPeriod = "10s"
 )
+
 func TestDungeonTransferBlock(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping in short mode")
@@ -64,7 +64,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 				Bech32Prefix:   "burnt",
 				Denom:          "uburnt",
 				TrustingPeriod: "336h",
-				ModifyGenesis: modifyGenesisShortProposals(votingPeriod, maxDepositPeriod),
+				ModifyGenesis:  modifyGenesisShortProposals(votingPeriod, maxDepositPeriod),
 			},
 		},
 	})
@@ -72,7 +72,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	chains, err := cf.Chains(t.Name())
 	require.NoError(t, err)
 
-	osmosis, burnt := chains[0], chains[1]
+	osmosis, burnt := chains[0].(*cosmos.CosmosChain), chains[1].(*cosmos.CosmosChain)
 
 	// Relayer Factory
 	client, network := ibctest.DockerSetup(t)
@@ -147,28 +147,47 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	// Disable sends of Burnt staking token
 	t.Log("disabling sendability of burnt staking token")
+
 	sendEnableds := []*banktypes.SendEnabled{
 		{
-			Denom: "uburnt",
+			Denom:   "uburnt",
 			Enabled: false,
 		},
 	}
 	data, err := json.Marshal(sendEnableds)
 	require.NoError(t, err)
 
-	proposal := paramsproposal.NewParameterChangeProposal(
-		"disable burnt send",
-		"disable burnt send but longer",
-		[]paramsproposal.ParamChange{
-		{
-			Subspace: banktypes.ModuleName,
-			Key: "SendEnabled",
-			Value: string(data),
+	prop := paramsutils.ParamChangeProposalJSON{
+		Title:       "Disable sendability of uburnt",
+		Description: "This proposal prevents uburnt from being sent in the bank module",
+		Changes: []paramsutils.ParamChangeJSON{
+			{
+				Subspace: banktypes.ModuleName,
+				Key:      "SendEnabled",
+				Value:    data,
 			},
 		},
-		)
-	govClient := govtypes.NewMsgClient(conn)
-	govClient.SubmitProposal(ctx, govtypes.NewMsgSubmitProposal(proposal, sdktypes.Coins{}, burnt.)
+		Deposit: "0uburnt",
+	}
+
+	paramChangeTx, err := burnt.ParamChangeProposal(ctx, burntUser.KeyName(), &prop)
+	require.NoError(t, err)
+	t.Logf("Param change proposal submitted with ID %s in transaction %s", paramChangeTx.ProposalID, paramChangeTx.TxHash)
+
+	err = burnt.VoteOnProposalAllValidators(ctx, paramChangeTx.ProposalID, cosmos.ProposalVoteYes)
+	require.NoError(t, err)
+
+	matched := false
+	for i := 0; i < 5; i++ {
+		_, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
+		if err != nil {
+			if matched, _ := regexp.MatchString("key not found$", err.Error()); matched {
+				break
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+	require.True(t, matched, "Proposal voting never completed")
 
 	// Send Transaction
 	t.Log("sending tokens from burnt to osmosis")
@@ -203,7 +222,6 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, amountToSend, osmosUserBalNew)
 }
-
 
 func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) func(ibc.ChainConfig, []byte) ([]byte, error) {
 	return func(chainConfig ibc.ChainConfig, genbz []byte) ([]byte, error) {
