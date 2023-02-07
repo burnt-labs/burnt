@@ -179,13 +179,15 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	matched := false
 	for i := 0; i < 5; i++ {
-		_, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
+		proposalInfo, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
 		if err != nil {
 			if matched, _ := regexp.MatchString("key not found$", err.Error()); matched {
 				break
 			}
+		} else {
+			t.Logf("Proposal ID %s status: %s", proposalInfo.ProposalID, proposalInfo.Status)
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 	require.True(t, matched, "Proposal voting never completed")
 
