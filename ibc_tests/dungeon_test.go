@@ -173,41 +173,34 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("Param change proposal submitted with ID %s in transaction %s", paramChangeTx.ProposalID, paramChangeTx.TxHash)
 
-	var i int
-	for i = 0; i < 5; i++ {
+	require.Eventuallyf(t, func() bool {
 		proposalInfo, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
 		if err != nil {
 			require.NoError(t, err)
 		} else {
 			if proposalInfo.Status == cosmos.ProposalStatusVotingPeriod {
-				break
+				return true
 			}
-			t.Logf("Waiting for proposal to enter voting status voting: %+v", proposalInfo)
+			t.Logf("Waiting for proposal to enter voting status VOTING, current status: %s", proposalInfo.Status)
 		}
-		time.Sleep(3 * time.Second)
-	}
-	if i == 5 {
-		t.Error("Failed to enter voting period voting")
-	}
+		return false
+	}, time.Second*11, time.Second, "failed to reach status VOTING after 11s")
 
 	err = burnt.VoteOnProposalAllValidators(ctx, paramChangeTx.ProposalID, cosmos.ProposalVoteYes)
 	require.NoError(t, err)
 
-	for i = 0; i < 5; i++ {
+	require.Eventuallyf(t, func() bool {
 		proposalInfo, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
 		if err != nil {
 			require.NoError(t, err)
 		} else {
 			if proposalInfo.Status == cosmos.ProposalStatusPassed {
-				break
+				return true
 			}
-			t.Logf("Waiting for proposal to enter voting status passed: %+v", proposalInfo)
+			t.Logf("Waiting for proposal to enter voting status PASSED, current status: %s", proposalInfo.Status)
 		}
-		time.Sleep(3 * time.Second)
-	}
-	if i == 5 {
-		t.Error("Failed to enter voting period passed")
-	}
+		return false
+	}, time.Second*11, time.Second, "failed to reach status PASSED after 11s")
 
 	// Send Transaction
 	t.Log("sending tokens from burnt to osmosis")
@@ -218,19 +211,17 @@ func TestDungeonTransferBlock(t *testing.T) {
 		Denom:   burnt.Config().Denom,
 		Amount:  amountToSend,
 	}
-	tx, err := burnt.SendIBCTransfer(ctx, burntChannelID, burntUser.KeyName(), transfer, ibc.TransferOptions{})
-	require.NoError(t, err)
-	require.NoError(t, tx.Validate())
+	_, err = burnt.SendIBCTransfer(ctx, burntChannelID, burntUser.KeyName(), transfer, ibc.TransferOptions{})
+	require.Error(t, err)
 
 	// relay packets and acknowledgments
 	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
 	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
 
 	// test source wallet has decreased funds
-	expectedBal := burntUserBalInitial - amountToSend
 	burntUserBalNew, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), burnt.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, expectedBal, burntUserBalNew)
+	require.Equal(t, burntUserBalInitial, burntUserBalNew)
 
 	// Trace IBC Denom
 	srcDenomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", burntChannelID, burnt.Config().Denom))
@@ -241,7 +232,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	t.Log("verifying receipt of tokens on osmosis")
 	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), dstIbcDenom)
 	require.NoError(t, err)
-	require.Equal(t, amountToSend, osmosUserBalNew)
+	require.Equal(t, int64(0), osmosUserBalNew)
 }
 
 func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) func(ibc.ChainConfig, []byte) ([]byte, error) {
