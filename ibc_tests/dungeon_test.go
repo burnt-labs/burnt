@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -167,29 +166,48 @@ func TestDungeonTransferBlock(t *testing.T) {
 				Value:    data,
 			},
 		},
-		Deposit: "0uburnt",
+		Deposit: "100uburnt",
 	}
 
 	paramChangeTx, err := burnt.ParamChangeProposal(ctx, burntUser.KeyName(), &prop)
 	require.NoError(t, err)
 	t.Logf("Param change proposal submitted with ID %s in transaction %s", paramChangeTx.ProposalID, paramChangeTx.TxHash)
 
-	err = burnt.VoteOnProposalAllValidators(ctx, paramChangeTx.ProposalID, cosmos.ProposalVoteYes)
-	require.NoError(t, err)
-
-	matched := false
-	for i := 0; i < 5; i++ {
+	var i int
+	for i = 0; i < 5; i++ {
 		proposalInfo, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
 		if err != nil {
-			if matched, _ := regexp.MatchString("key not found$", err.Error()); matched {
+			require.NoError(t, err)
+		} else {
+			if proposalInfo.Status == cosmos.ProposalStatusVotingPeriod {
 				break
 			}
-		} else {
-			t.Logf("Proposal ID %s status: %s", proposalInfo.ProposalID, proposalInfo.Status)
+			t.Logf("Waiting for proposal to enter voting status voting: %+v", proposalInfo)
 		}
 		time.Sleep(3 * time.Second)
 	}
-	require.True(t, matched, "Proposal voting never completed")
+	if i == 5 {
+		t.Error("Failed to enter voting period voting")
+	}
+
+	err = burnt.VoteOnProposalAllValidators(ctx, paramChangeTx.ProposalID, cosmos.ProposalVoteYes)
+	require.NoError(t, err)
+
+	for i = 0; i < 5; i++ {
+		proposalInfo, err := burnt.QueryProposal(ctx, paramChangeTx.ProposalID)
+		if err != nil {
+			require.NoError(t, err)
+		} else {
+			if proposalInfo.Status == cosmos.ProposalStatusPassed {
+				break
+			}
+			t.Logf("Waiting for proposal to enter voting status passed: %+v", proposalInfo)
+		}
+		time.Sleep(3 * time.Second)
+	}
+	if i == 5 {
+		t.Error("Failed to enter voting period passed")
+	}
 
 	// Send Transaction
 	t.Log("sending tokens from burnt to osmosis")
@@ -210,15 +228,16 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	// test source wallet has decreased funds
 	expectedBal := burntUserBalInitial - amountToSend
-	gaiaUserBalNew, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), burnt.Config().Denom)
+	burntUserBalNew, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), burnt.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, expectedBal, gaiaUserBalNew)
+	require.Equal(t, expectedBal, burntUserBalNew)
 
 	// Trace IBC Denom
 	srcDenomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", burntChannelID, burnt.Config().Denom))
 	dstIbcDenom := srcDenomTrace.IBCDenom()
 
 	// Test destination wallet has increased funds
+	t.Log("verifying receipt of tokens on osmosis")
 	t.Log("verifying receipt of tokens on osmosis")
 	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), dstIbcDenom)
 	require.NoError(t, err)
@@ -238,6 +257,9 @@ func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) f
 			return nil, fmt.Errorf("failed to set voting period in genesis json: %w", err)
 		}
 		if err := dyno.Set(g, chainConfig.Denom, "app_state", "gov", "deposit_params", "min_deposit", 0, "denom"); err != nil {
+			return nil, fmt.Errorf("failed to set voting period in genesis json: %w", err)
+		}
+		if err := dyno.Set(g, 100, "app_state", "gov", "deposit_params", "min_deposit", 0, "amount"); err != nil {
 			return nil, fmt.Errorf("failed to set voting period in genesis json: %w", err)
 		}
 		out, err := json.Marshal(g)
