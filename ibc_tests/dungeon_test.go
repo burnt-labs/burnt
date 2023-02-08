@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	paramsutils "github.com/cosmos/cosmos-sdk/x/params/client/utils"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -229,10 +230,54 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	// Test destination wallet has increased funds
 	t.Log("verifying receipt of tokens on osmosis")
-	t.Log("verifying receipt of tokens on osmosis")
 	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), dstIbcDenom)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), osmosUserBalNew)
+
+	// Create a user without any funds
+	emptyKeyName := "burnt-empty-key"
+	err = burnt.CreateKey(ctx, emptyKeyName)
+	require.NoError(t, err)
+	emptyKeyAddressBytes, err := burnt.GetAddress(ctx, emptyKeyName)
+	require.NoError(t, err)
+	emptyKeyAddress, err := types.Bech32ifyAddressBytes(burnt.Config().Bech32Prefix, emptyKeyAddressBytes)
+	require.NoError(t, err)
+
+	transfer = ibc.WalletAmount{
+		Address: emptyKeyAddress,
+		Denom:   osmosis.Config().Denom,
+		Amount:  int64(1_000_000),
+	}
+	_, err = osmosis.SendIBCTransfer(ctx, osmoChannelID, osmosisUser.KeyName(), transfer, ibc.TransferOptions{})
+	require.NoError(t, err)
+
+	// relay packets and acknowledgments
+	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
+	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
+
+	emptyUserBal, err := burnt.GetBalance(ctx, emptyKeyAddress, osmosis.Config().Denom)
+	require.NoError(t, err)
+	require.Equal(t, int64(1_000_000), emptyUserBal)
+
+	require.NoError(t, burnt.SendFunds(ctx, emptyKeyName, ibc.WalletAmount{
+		Address: burntUser.FormattedAddress(),
+		Denom:   osmosis.Config().Denom,
+		Amount:  1_000_000,
+	}))
+
+	burntUserOsmoBal, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), osmosis.Config().Denom)
+	require.NoError(t, err)
+	require.Equal(t, int64(1_000_000), burntUserOsmoBal)
+
+	transfer = ibc.WalletAmount{
+		Address: osmosisUser.FormattedAddress(),
+		Denom:   osmosis.Config().Denom,
+		Amount:  int64(1_000_000),
+	}
+	_, err = burnt.SendIBCTransfer(ctx, burntChannelID, burntUser.KeyName(), transfer, ibc.TransferOptions{})
+	require.NoError(t, err)
+	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
+	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
 }
 
 func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) func(ibc.ChainConfig, []byte) ([]byte, error) {
