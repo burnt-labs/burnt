@@ -226,11 +226,11 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	// Trace IBC Denom
 	srcDenomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", burntChannelID, burnt.Config().Denom))
-	dstIbcDenom := srcDenomTrace.IBCDenom()
+	burntOnOsmoIbcDenom := srcDenomTrace.IBCDenom()
 
 	// Test destination wallet has increased funds
 	t.Log("verifying receipt of tokens on osmosis")
-	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), dstIbcDenom)
+	osmosUserBalNew, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), burntOnOsmoIbcDenom)
 	require.NoError(t, err)
 	require.Equal(t, int64(0), osmosUserBalNew)
 
@@ -255,29 +255,44 @@ func TestDungeonTransferBlock(t *testing.T) {
 	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
 	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
 
-	emptyUserBal, err := burnt.GetBalance(ctx, emptyKeyAddress, osmosis.Config().Denom)
+	osmoUserBalAfterIbcTransfer, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), osmosis.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, int64(1_000_000), emptyUserBal)
+	require.Equal(t, 9_000_000, osmoUserBalAfterIbcTransfer)
+
+	emptyUserBals, err := burnt.AllBalances(ctx, emptyKeyAddress)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(emptyUserBals))
+
+	osmoDenomTrace := transfertypes.ParseDenomTrace(transfertypes.GetPrefixedDenom("transfer", osmoChannelID, osmosis.Config().Denom))
+	osmoOnBurntIbcDenom := osmoDenomTrace.IBCDenom()
+
+	coin := emptyUserBals[0]
+	require.Equal(t, osmoOnBurntIbcDenom, coin.Denom)
+	require.Equal(t, 1_000_000, coin.Amount)
 
 	require.NoError(t, burnt.SendFunds(ctx, emptyKeyName, ibc.WalletAmount{
 		Address: burntUser.FormattedAddress(),
-		Denom:   osmosis.Config().Denom,
+		Denom:   osmoOnBurntIbcDenom,
 		Amount:  1_000_000,
 	}))
 
-	burntUserOsmoBal, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), osmosis.Config().Denom)
+	burntUserOsmoBal, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), osmoOnBurntIbcDenom)
 	require.NoError(t, err)
 	require.Equal(t, int64(1_000_000), burntUserOsmoBal)
 
 	transfer = ibc.WalletAmount{
 		Address: osmosisUser.FormattedAddress(),
-		Denom:   osmosis.Config().Denom,
+		Denom:   osmoOnBurntIbcDenom,
 		Amount:  int64(1_000_000),
 	}
 	_, err = burnt.SendIBCTransfer(ctx, burntChannelID, burntUser.KeyName(), transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
 	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
 	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
+
+	osmoUserBalAfterIbcReturnTransfer, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), osmosis.Config().Denom)
+	require.NoError(t, err)
+	require.Equal(t, 10_000_000, osmoUserBalAfterIbcReturnTransfer)
 }
 
 func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) func(ibc.ChainConfig, []byte) ([]byte, error) {
