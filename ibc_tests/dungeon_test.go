@@ -19,6 +19,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v6/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v6/ibc"
 	"github.com/strangelove-ventures/interchaintest/v6/testreporter"
+	"github.com/strangelove-ventures/interchaintest/v6/testutil"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 	"google.golang.org/grpc"
@@ -39,12 +40,44 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	ctx := context.Background()
 
+	// pulling image from env to foster local dev
 	imageTag := os.Getenv("BURNT_IMAGE")
 	imageTagComponents := strings.Split(imageTag, ":")
 
+	// disabling seeds in osmosis because it causes intermittent test failures
+	osmoConfigFileOverrides := make(map[string]any)
+	osmoConfigTomlOverrides := make(testutil.Toml)
+
+	osmoP2POverrides := make(testutil.Toml)
+	osmoP2POverrides["seeds"] = ""
+	osmoConfigTomlOverrides["p2p"] = osmoP2POverrides
+
+	osmoConfigFileOverrides["config/config.toml"] = osmoConfigTomlOverrides
+
 	// Chain factory
 	cf := ibctest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*ibctest.ChainSpec{
-		{Name: "osmosis", Version: "v11.0.0"},
+		{
+			Name:    "osmosis",
+			Version: "v14.0.0",
+			ChainConfig: ibc.ChainConfig{
+				Images: []ibc.DockerImage{
+					{
+						Repository: "ghcr.io/strangelove-ventures/heighliner/osmosis",
+						Version:    "v14.0.0",
+						UidGid:     "1025:1025",
+					},
+				},
+				Type:                "cosmos",
+				Bin:                 "osmosisd",
+				Bech32Prefix:        "osmo",
+				Denom:               "uosmo",
+				GasPrices:           "0.0uosmo",
+				GasAdjustment:       1.3,
+				TrustingPeriod:      "336h",
+				NoHostMount:         false,
+				ConfigFileOverrides: osmoConfigFileOverrides,
+			},
+		},
 		{
 			Name:    imageTagComponents[0],
 			Version: imageTagComponents[1],
