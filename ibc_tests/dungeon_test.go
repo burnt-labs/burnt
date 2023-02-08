@@ -257,7 +257,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	osmoUserBalAfterIbcTransfer, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), osmosis.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, 9_000_000, osmoUserBalAfterIbcTransfer)
+	require.Equal(t, int64(9_000_000), osmoUserBalAfterIbcTransfer)
 
 	emptyUserBals, err := burnt.AllBalances(ctx, emptyKeyAddress)
 	require.NoError(t, err)
@@ -268,7 +268,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	coin := emptyUserBals[0]
 	require.Equal(t, osmoOnBurntIbcDenom, coin.Denom)
-	require.Equal(t, 1_000_000, coin.Amount)
+	require.Equal(t, int64(1_000_000), coin.Amount)
 
 	require.NoError(t, burnt.SendFunds(ctx, emptyKeyName, ibc.WalletAmount{
 		Address: burntUser.FormattedAddress(),
