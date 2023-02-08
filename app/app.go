@@ -120,7 +120,6 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	appparams "github.com/burnt-labs/burnt/app/params"
-	"github.com/burnt-labs/burnt/x/dungeon"
 	"github.com/burnt-labs/burnt/x/schedule"
 	schedulekeeper "github.com/burnt-labs/burnt/x/schedule/keeper"
 	scheduletypes "github.com/burnt-labs/burnt/x/schedule/types"
@@ -598,7 +597,6 @@ func NewWasmApp(
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
-	transferStack = dungeon.NewIBCMiddleware(transferStack, app.IBCFeeKeeper.Chann, &app.StakingKeeper)
 
 	// Create Interchain Accounts Stack
 	// SendPacket, since it is originating from the application to core IBC:
