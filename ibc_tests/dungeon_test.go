@@ -292,7 +292,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	osmoUserBalAfterIbcReturnTransfer, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), osmosis.Config().Denom)
 	require.NoError(t, err)
-	require.Equal(t, 10_000_000, osmoUserBalAfterIbcReturnTransfer)
+	require.Equal(t, int64(10_000_000), osmoUserBalAfterIbcReturnTransfer)
 }
 
 func modifyGenesisShortProposals(votingPeriod string, maxDepositPeriod string) func(ibc.ChainConfig, []byte) ([]byte, error) {
