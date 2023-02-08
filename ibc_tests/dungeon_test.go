@@ -287,8 +287,8 @@ func TestDungeonTransferBlock(t *testing.T) {
 	}
 	_, err = burnt.SendIBCTransfer(ctx, burntChannelID, burntUser.KeyName(), transfer, ibc.TransferOptions{})
 	require.NoError(t, err)
-	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, osmoChannelID))
-	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, burntChannelID))
+	require.NoError(t, relayer.FlushPackets(ctx, eRep, ibcPath, burntChannelID))
+	require.NoError(t, relayer.FlushAcknowledgements(ctx, eRep, ibcPath, osmoChannelID))
 
 	osmoUserBalAfterIbcReturnTransfer, err := osmosis.GetBalance(ctx, osmosisUser.FormattedAddress(), osmosis.Config().Denom)
 	require.NoError(t, err)
