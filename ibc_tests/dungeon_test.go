@@ -268,7 +268,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	coin := emptyUserBals[0]
 	require.Equal(t, osmoOnBurntIbcDenom, coin.Denom)
-	require.Equal(t, int64(1_000_000), coin.Amount)
+	require.Equal(t, int64(1_000_000), coin.Amount.Int64())
 
 	require.NoError(t, burnt.SendFunds(ctx, emptyKeyName, ibc.WalletAmount{
 		Address: burntUser.FormattedAddress(),
