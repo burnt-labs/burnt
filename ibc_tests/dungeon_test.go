@@ -309,9 +309,10 @@ func TestDungeonTransferBlock(t *testing.T) {
 		Amount:  1_000_000,
 	}))
 
-	burntUserOsmoBal, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), osmoOnBurntIbcDenom)
-	require.NoError(t, err)
-	require.Equal(t, int64(1_000_000), burntUserOsmoBal)
+	require.Eventually(t, func() bool {
+		burntUserOsmoBal, err := burnt.GetBalance(ctx, burntUser.FormattedAddress(), osmoOnBurntIbcDenom)
+		return err == nil && int64(1_000_000) == burntUserOsmoBal
+	}, 5*time.Second, 500*time.Millisecond)
 
 	transfer = ibc.WalletAmount{
 		Address: osmosisUser.FormattedAddress(),
