@@ -1,4 +1,4 @@
-name: Integration tests
+name: Interchain tests
 
 on:
   push:
@@ -44,28 +44,31 @@ jobs:
         id: meta
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-burnt
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-heighliner
           tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern=v{{version}}
-      - name: build-and-push
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          builder: ${{ steps.buildx.outputs.name }}
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
+      - name: retrieve heighliner binary
+        run: | 
+          curl -O -L https://github.com/strangelove-ventures/heighliner/releases/download/v1.1.0/heighliner_1.1.0_linux_amd64.tar.gz
+          tar -xf heighliner_1.1.0_linux_amd64.tar.gz
+
+      - name: build heighliner burnt image
+        run: ./heighliner build -c burnt --local
+
+      - name: push heighliner image to github repo
+        run: |
+          docker images
+          docker tag burnt:local ${{ steps.meta.outputs.tags }}
+          docker push burnt:local
+
       - name: Move Docker cache
         run: |
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-  integration-tests:
+  interchain-tests:
     environment: CI
     runs-on: ubuntu-latest
     needs: [ go-build ]
@@ -73,8 +76,7 @@ jobs:
       fail-fast: false
       matrix:
         test_type: [
-            "HappyPath",
-            "ScheduledCall",
+          "DungeonTransferBlock",
         ]
 
     steps:
@@ -103,7 +105,7 @@ jobs:
         id: meta-burnt
         uses: docker/metadata-action@v3
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-burnt
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-heighliner
       - name: pull burnt image
         run: docker pull ${{ steps.meta-burnt.outputs.tags }}
       - name: rename burnt image
@@ -116,4 +118,5 @@ jobs:
         run: ./integration_tests/integration_tests.test -test.failfast -test.v -test.run IntegrationTestSuite -testify.m Test${{ matrix.test_type }}
         env:
           E2E_SKIP_CLEANUP: true
+          BURNT_IMAGE: burnt:prebuilt
 

@@ -2,8 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/spf13/cast"
 	"io"
 	"net/http"
 	"os"
@@ -99,6 +97,8 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v4/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v4/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v4/modules/core/keeper"
+	"github.com/gorilla/mux"
+	"github.com/spf13/cast"
 	"github.com/tendermint/starport/starport/pkg/cosmoscmd"
 
 	// Note: please do your research before using this in production app, this is a demo and not an officially

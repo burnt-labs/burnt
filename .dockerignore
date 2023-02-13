@@ -1,5 +1,7 @@
 integration_tests/
+ibc_tests/
 Dockerfile
+Dockerfile.heighliner.local
 
 .idea/
 .github/
