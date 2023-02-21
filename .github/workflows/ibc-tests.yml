@@ -44,7 +44,7 @@ jobs:
         uses: burnt-labs/heighliner-action@v1.0.0-alpha
         with:
           local: true
-          tag: ${{ steps.meta.outputs.tags }}
+          tag: ${{ steps.meta.outputs.version }}
           chain: burnt
       - name: Move Docker cache
         run: |
