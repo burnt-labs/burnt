@@ -41,7 +41,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern=v{{version}}
       - name: heighliner build and push
-        uses: burnt-labs/heighliner-action@v1.0.0-alpha2
+        uses: burnt-labs/heighliner-action@v1.0.0-alpha3
         with:
           local: true
           tag: ${{ steps.meta.outputs.version }}
