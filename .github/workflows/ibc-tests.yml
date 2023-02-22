@@ -46,6 +46,7 @@ jobs:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
+          registry: ghcr.io/burnt-labs
       - name: Move Docker cache
         run: |
           rm -rf /tmp/.buildx-cache
@@ -58,9 +59,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        test_type: [
-          "DungeonTransferBlock",
-        ]
+        test_type:
+        - "DungeonTransferBlock"
 
     steps:
       - name: Set up Go 1.18
