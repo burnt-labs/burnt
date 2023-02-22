@@ -49,7 +49,7 @@ jobs:
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
           buildkit: true
-          buildkit-addr: ${{ steps.setup_buildx.outputs.nodes[0].endpoint }}
+          buildkit-address: ${{ steps.setup_buildx.outputs.nodes[0].endpoint }}
           registry: ghcr.io/burnt-labs/burnt
       - name: Move Docker cache
         run: |
