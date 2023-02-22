@@ -41,12 +41,15 @@ jobs:
             type=ref,event=pr
             type=semver,pattern=v{{version}}
       - name: heighliner build and push
+        id: heighlinerbuild
         uses: burnt-labs/heighliner-action@v1.0.0-alpha6
         with:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
           registry: ghcr.io/burnt-labs/burnt
+      - name: Push manually
+        run: docker push ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
       - name: Move Docker cache
         run: |
           rm -rf /tmp/.buildx-cache
