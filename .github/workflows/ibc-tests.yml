@@ -24,6 +24,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
+        id: setup_buildx
         uses: docker/setup-buildx-action@v1
       - name: container-login
         uses: docker/login-action@v1
@@ -42,12 +43,13 @@ jobs:
             type=semver,pattern=v{{version}}
       - name: heighliner build and push
         id: heighlinerbuild
-        uses: burnt-labs/heighliner-action@v1.0.0-alpha8
+        uses: burnt-labs/heighliner-action@v1.0.0-alpha9
         with:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
           buildkit: true
+          buildkit-addr: ${{ steps.setup_buildx.outputs.nodes[0].endpoint }}
           registry: ghcr.io/burnt-labs/burnt
       - name: Move Docker cache
         run: |
