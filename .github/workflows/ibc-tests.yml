@@ -91,9 +91,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-heighliner
       - name: pull burnt image
-        run: docker pull ${{ steps.meta-burnt.outputs.tags }}
+        run: docker pull ghcr.io/burnt-labs/burnt/burnt:${{ steps.meta-burnt.outputs.version }}
       - name: rename burnt image
-        run: docker tag ${{ steps.meta-burnt.outputs.tags }} burnt:prebuilt
+        run: docker tag ghcr.io/burnt-labs/burnt/burnt:${{ steps.meta-burnt.outputs.version }} burnt:prebuilt
       - name: clean slate
         run: make e2e_clean_slate
       - name: build go test binary
