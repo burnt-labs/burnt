@@ -26,8 +26,6 @@ jobs:
       - name: Set up Docker Buildx
         id: setup_buildx
         uses: docker/setup-buildx-action@v2.4.1
-      - name: Debug buildx setup
-        run: echo '${{ toJSON(steps.setup_buildx.outputs.nodes[0]) }}'
       - name: container-login
         uses: docker/login-action@v1
         with:
@@ -43,20 +41,17 @@ jobs:
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern=v{{version}}
-      - name: heighliner build and push
+      - name: Heighliner build and push
         id: heighlinerbuild
         uses: burnt-labs/heighliner-action@v1.0.0-alpha9
         with:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
-          buildkit: true
-          buildkit-address: unix:///var/run/docker.sock
-          registry: ghcr.io/burnt-labs/burnt
-      - name: Move Docker cache
+      - name: Push docker image
         run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+          docker tag ${{ steps.heighlinerbuild.outputs.tag }} ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
+          docker push ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
 
   interchain-tests:
     environment: CI
