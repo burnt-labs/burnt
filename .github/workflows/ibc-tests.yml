@@ -47,9 +47,11 @@ jobs:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
-          registry: ghcr.io/burnt-labs/burnt
+          # registry: ghcr.io/burnt-labs/burnt
       - name: Push manually
-        run: docker push ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
+        run: |
+          docker tag ${{ steps.heighlinerbuild.outputs.tag }} ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
+          docker push ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
       - name: Move Docker cache
         run: |
           rm -rf /tmp/.buildx-cache
