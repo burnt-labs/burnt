@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
         id: setup_buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2.4.1
       - name: Debug buildx setup
         run: echo '${{ toJSON(steps.setup_buildx.outputs.nodes) }}'
       - name: container-login
