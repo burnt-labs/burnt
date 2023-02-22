@@ -46,7 +46,7 @@ jobs:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
-          registry: ghcr.io/burnt-labs
+          registry: ghcr.io/burnt-labs/burnt
       - name: Move Docker cache
         run: |
           rm -rf /tmp/.buildx-cache
