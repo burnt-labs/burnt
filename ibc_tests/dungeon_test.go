@@ -41,7 +41,7 @@ func TestDungeonTransferBlock(t *testing.T) {
 	ctx := context.Background()
 
 	var numFullNodes = 1
-	var numValidators = 0
+	var numValidators = 1
 
 	// pulling image from env to foster local dev
 	imageTag := os.Getenv("BURNT_IMAGE")
