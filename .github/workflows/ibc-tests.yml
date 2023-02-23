@@ -24,10 +24,7 @@ jobs:
       - name: checkout
         uses: actions/checkout@v2
       - name: Set up Docker Buildx
-        id: setup_buildx
         uses: docker/setup-buildx-action@v2.4.1
-        with:
-          buildkitd-flags: "--addr tcp://127.0.0.1:1527 --allow-insecure-entitlement network.host"
       - name: container-login
         uses: docker/login-action@v1
         with:
@@ -50,8 +47,6 @@ jobs:
           local: true
           tag: ${{ steps.meta.outputs.version }}
           chain: burnt
-          buildkit: true
-          buildkit-address: "tcp://127.0.0.1:1527"
       - name: Push docker image
         run: |
           docker tag ${{ steps.heighlinerbuild.outputs.tag }} ghcr.io/burnt-labs/burnt/${{ steps.heighlinerbuild.outputs.tag }}
