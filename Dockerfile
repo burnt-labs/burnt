@@ -85,6 +85,7 @@ FROM alpine:3.16 AS burnt-release
   RUN set -euxo pipefail \
     && apk add --no-cache \
       aria2 \
+      aws-cli \
       bash \
       curl \
       htop \
