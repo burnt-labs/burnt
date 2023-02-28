@@ -35,6 +35,13 @@ jobs:
       - name: Check short SHA
         run: echo ${{ steps.vars.outputs.sha_short }}
 
+      - name: Install kustomize, kubectl and skaffold
+        uses: daisaru11/setup-cd-tools@v1
+        with:
+          kubectl: "1.26.1"
+          kustomize: "4.5.7"
+          skaffold: "2.1.0"
+
       - name: Cache skaffold image builds & config
         uses: actions/cache@v2
         with:
