@@ -40,6 +40,9 @@ func TestDungeonTransferBlock(t *testing.T) {
 
 	ctx := context.Background()
 
+	var numFullNodes = 1
+	var numValidators = 1
+
 	// pulling image from env to foster local dev
 	imageTag := os.Getenv("BURNT_IMAGE")
 	imageTagComponents := strings.Split(imageTag, ":")
@@ -77,6 +80,8 @@ func TestDungeonTransferBlock(t *testing.T) {
 				NoHostMount:         false,
 				ConfigFileOverrides: osmoConfigFileOverrides,
 			},
+			NumValidators: &numValidators,
+			NumFullNodes:  &numFullNodes,
 		},
 		{
 			Name:    imageTagComponents[0],
@@ -99,6 +104,8 @@ func TestDungeonTransferBlock(t *testing.T) {
 				TrustingPeriod: "336h",
 				ModifyGenesis:  modifyGenesisShortProposals(votingPeriod, maxDepositPeriod),
 			},
+			NumValidators: &numValidators,
+			NumFullNodes:  &numFullNodes,
 		},
 	})
 
