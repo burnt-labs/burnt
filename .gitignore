@@ -11,3 +11,4 @@ testlogs/
 
 # intellij
 *.iml
+.envrc
