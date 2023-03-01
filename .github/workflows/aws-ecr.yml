@@ -3,7 +3,7 @@ name: Build and Push to Amazon ECR
 
 on:
   push:
-    branches: ["froch/tarball"]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
