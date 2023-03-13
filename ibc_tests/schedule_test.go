@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	ibctest "github.com/strangelove-ventures/interchaintest/v6"
 	"github.com/strangelove-ventures/interchaintest/v6/chain/cosmos"
@@ -109,23 +107,21 @@ func TestScheduledCall(t *testing.T) {
 	tickerCodeID, err := burnt.StoreContract(ctx, burntUser.KeyName(), "contracts/compiled/ticker.wasm")
 	require.NoError(t, err)
 	require.NotZero(t, tickerCodeID)
-	tickerCodeIDInt, err := strconv.Atoi(tickerCodeID)
-	require.NoError(t, err)
 	proxyCodeID, err := burnt.StoreContract(ctx, burntUser.KeyName(), "contracts/compiled/proxy.wasm")
 	require.NoError(t, err)
 	require.NotZero(t, proxyCodeID)
-	proxyCodeIDInt, err := strconv.Atoi(proxyCodeID)
-	require.NoError(t, err)
 
 	// instantiate contracts
-	tickerInstantiateMsg, err := createTickerInstantiateMsg(uint64(tickerCodeIDInt), "test ticker", burntUser.Address(), StartCount)
+	tickerInstantiateMsg, err := json.Marshal(map[string]interface{}{
+		"count": StartCount,
+	})
 	require.NoError(t, err)
-	tickerContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), tickerCodeID, tickerInstantiateMsg.String(), false)
+	tickerContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), tickerCodeID, string(tickerInstantiateMsg), false)
 	require.NoError(t, err)
 
-	proxyInstantiateMsg, err := createInstantiateProxyMsg(uint64(proxyCodeIDInt), "test proxy", burntUser.Address())
+	proxyInstantiateMsg, err := json.Marshal(map[string]interface{}{})
 	require.NoError(t, err)
-	proxyContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), proxyCodeID, proxyInstantiateMsg.String(), false)
+	proxyContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), proxyCodeID, string(proxyInstantiateMsg), false)
 	require.NoError(t, err)
 
 	// query initial contract state
@@ -143,38 +139,6 @@ func TestScheduledCall(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, burnt.ExecuteContract(ctx, burntUser.KeyName(), tickerContractAddr, string(incrementMsg)))
-}
-
-func createTickerInstantiateMsg(codeId uint64, label string, sender sdktypes.AccAddress, count int32) (wasmtypes.MsgInstantiateContract, error) {
-	msg, err := json.Marshal(map[string]interface{}{
-		"count": count,
-	})
-	if err != nil {
-		return wasmtypes.MsgInstantiateContract{}, err
-	}
-	return wasmtypes.MsgInstantiateContract{
-		Sender: sender.String(),
-		Admin:  sender.String(),
-		CodeID: codeId,
-		Label:  label,
-		Msg:    msg,
-		Funds:  nil,
-	}, nil
-}
-
-func createInstantiateProxyMsg(codeId uint64, label string, sender sdktypes.AccAddress) (wasmtypes.MsgInstantiateContract, error) {
-	msg, err := json.Marshal(map[string]interface{}{})
-	if err != nil {
-		return wasmtypes.MsgInstantiateContract{}, err
-	}
-	return wasmtypes.MsgInstantiateContract{
-		Sender: sender.String(),
-		Admin:  sender.String(),
-		CodeID: codeId,
-		Label:  label,
-		Msg:    msg,
-		Funds:  nil,
-	}, nil
 }
 
 type TickerCountResponse struct {
