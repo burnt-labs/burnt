@@ -49,7 +49,7 @@ func TestScheduledCall(t *testing.T) {
 					},
 				},
 				GasPrices:      "0.0uburnt",
-				GasAdjustment:  1.3,
+				GasAdjustment:  3,
 				Type:           "cosmos",
 				ChainID:        "burnt-1",
 				Bin:            "burntd",
@@ -116,12 +116,13 @@ func TestScheduledCall(t *testing.T) {
 		"count": StartCount,
 	})
 	require.NoError(t, err)
-	tickerContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), tickerCodeID, string(tickerInstantiateMsg), false)
+	adminAddr := burntUser.FormattedAddress()
+	tickerContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), tickerCodeID, string(tickerInstantiateMsg), &adminAddr)
 	require.NoError(t, err)
 
 	proxyInstantiateMsg, err := json.Marshal(map[string]interface{}{})
 	require.NoError(t, err)
-	proxyContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), proxyCodeID, string(proxyInstantiateMsg), false)
+	proxyContractAddr, err := burnt.InstantiateContract(ctx, burntUser.KeyName(), proxyCodeID, string(proxyInstantiateMsg), &adminAddr)
 	require.NoError(t, err)
 
 	// query initial contract state
