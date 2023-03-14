@@ -142,7 +142,10 @@ func TestScheduledCall(t *testing.T) {
 	require.NoError(t, burnt.ExecuteContract(ctx, burntUser.KeyName(), tickerContractAddr, string(incrementMsg)))
 }
 
-type TickerCountResponse struct {
+type TickerCountQueryResponse struct {
+	Data CountResponse `json:"data"`
+}
+type CountResponse struct {
 	Count int32 `json:"count"`
 }
 
@@ -150,15 +153,18 @@ func queryTickerCount(ctx context.Context, chain *cosmos.CosmosChain, addr strin
 	queryData := map[string]interface{}{
 		"get_count": map[string]interface{}{},
 	}
-	var countResponse TickerCountResponse
-	if err := chain.QueryContract(ctx, addr, queryData, &countResponse); err != nil {
+	var res TickerCountQueryResponse
+	if err := chain.QueryContract(ctx, addr, queryData, &res); err != nil {
 		return 0, err
 	}
 
-	return int(countResponse.Count), nil
+	return int(res.Data.Count), nil
 }
 
-type ProxyIsOwnerResponse struct {
+type ProxyIsOwnerQueryResponse struct {
+	Data IsOwnerResponse `json:"data"`
+}
+type IsOwnerResponse struct {
 	IsOwner bool `json:"is_owner"`
 }
 
@@ -168,9 +174,9 @@ func queryIsProxyOwner(ctx context.Context, chain *cosmos.CosmosChain, addr stri
 			"address": owner,
 		},
 	}
-	var res ProxyIsOwnerResponse
+	var res ProxyIsOwnerQueryResponse
 	if err := chain.QueryContract(ctx, addr, queryData, &res); err != nil {
 		return false, err
 	}
-	return res.IsOwner, nil
+	return res.Data.IsOwner, nil
 }
