@@ -2,7 +2,7 @@
 
 Burnt Chain is a unique platform that stands out from other blockchains due to its focus on revenue-generating decentralized applications and fee sharing with validators. To achieve this, Burnt Chain leverages CosmWasm, a smart contract platform focusing on security, performance, and interoperability, making it the only smart contract platform for public blockchains with heavy adoption outside of the EVM world. Additionally, Burnt Chain features a custom Cosmos module called "schedule," enabling developers to schedule deferred and recurring computation on-chain without the need to run a centralized service to execute their tasks.
 
-**If you're a developer looking for build and architecture information, go to [Development](development).**
+**If you're a developer looking for build and architecture information, go to [Development](#development).**
 
 ## Why Burnt Chain?
 
