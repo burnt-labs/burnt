@@ -1,52 +1,39 @@
-# burnt
-**burnt** is a blockchain built using Cosmos SDK and Tendermint and created with [Starport](https://starport.com).
+# Burnt Chain
 
-## Get started
+Burnt Chain is a unique platform that stands out from other blockchains due to its focus on revenue-generating decentralized applications and fee sharing with validators. To achieve this, Burnt Chain leverages CosmWasm, a smart contract platform focusing on security, performance, and interoperability, making it the only smart contract platform for public blockchains with heavy adoption outside of the EVM world. Burnt Chain features a custom Cosmos module called "schedule," enabling developers to schedule deferred and recurring computation on-chain without the need to run a centralized service to execute their tasks.
 
-```
-starport chain serve
-```
+## Development
 
-`serve` command installs dependencies, builds, initializes, and starts your blockchain in development.
+Burnt Chain is a golang project built on the [cosmos-sdk](https://github.com/cosmos/cosmos-sdk) with the help of [Ignite](https://ignite.com/).
 
-### Configure
+### Build and Install
 
-Your blockchain in development can be configured with `config.yml`. To learn more, see the [Starport docs](https://docs.starport.com).
+The `burntd` binary can be built via our Makefile with
 
-### Web Frontend
-
-Starport has scaffolded a Vue.js-based web app in the `vue` directory. Run the following commands to install dependencies and start the app:
-
-```
-cd vue
-npm install
-npm run serve
+```bash
+make build
 ```
 
-The frontend app is built using the `@starport/vue` and `@starport/vuex` packages. For details, see the [monorepo for Starport front-end development](https://github.com/tendermint/vue).
+which will output a binary at `build/burntd`. To install `burntd` into your GOPATH, you can use
 
-## Release
-To release a new version of your blockchain, create and push a new tag with `v` prefix. A new draft release with the configured targets will be created.
-
-```
-git tag v0.1
-git push origin v0.1
+```bash
+make install
 ```
 
-After a draft release is created, make your final changes from the release page and publish it.
+You will need to ensure that the output of `echo $(go env GOPATH)/bin` is in your PATH.
 
-### Install
-To install the latest version of your blockchain node's binary, execute the following command on your machine:
+### Burnt-specific Logic
 
-```
-curl https://get.starport.com/BurntFinance/burnt@latest! | sudo bash
-```
-`BurntFinance/burnt` should match the `username` and `repo_name` of the Github repository to which the source code was pushed. Learn more about [the install process](https://github.com/allinbits/starport-installer).
+Burnt Chain introduces a few custom features in the form of cosmos modules. These can be found in two places:
 
-## Learn more
+- First, in this repository under `x/schedule` you will find the code for our `schedule` module for scheduled and recurring computation. This module follows the pre cosmos-sdk v0.47.0 conventions.
+- Second, in our [fork of cosmos-sdk](https://github.com/burnt-labs/cosmos-sdk/tree/mint) (on the `mint` branch) you will find our modified mint module under `x/mint`.
+- Finally, the Burnt Chain is assembled of all of its component modules and configurations under the `app/` directory in this repo, with `app/app.go` as the primary entrypoint.
 
-- [Starport](https://starport.com)
-- [Tutorials](https://docs.starport.com/guide)
-- [Starport docs](https://docs.starport.com)
-- [Cosmos SDK docs](https://docs.cosmos.network)
-- [Developer Chat](https://discord.gg/H6wGTY8sxw)
+## Contributing
+
+Contributing to the Burnt Chain codebase is highly encouraged. If a user has an issue running Burnt Chain, they can create an issue on our GitHub page. This will allow the team to investigate the issue and work on resolving it.
+
+If a user would like to implement a new feature for Burnt Chain or contribute to the codebase, they can contact the team in Discord or create an issue on GitHub to discuss the costs and benefits. This will help ensure that the proposed feature aligns with the platform's vision and goals.
+
+The Burnt Chain team welcomes contributions from the community and is committed to building a strong ecosystem of developers and users around the platform.
