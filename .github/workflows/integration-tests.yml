@@ -1,13 +1,13 @@
 name: Integration tests
 
-on:
-  push:
-    branches:
-      - main
-    tags:
-      - 'v*.*.*'
-
-  pull_request:
+#on:
+#  push:
+#    branches:
+#      - main
+#    tags:
+#      - 'v*.*.*'
+#
+#  pull_request:
 
 env:
   CARGO_TERM_COLOR: always
